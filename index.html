@@ -19,11 +19,11 @@ window.addEventListener("resize",()=>{ w=canvas.width=window.innerWidth; h=canva
 
 /* ---------- SKY ---------- */
 const skyStages=[
-  {top:[255,100,0], bottom:[255,180,80]}, // Sunset
-  {top:[20,30,70], bottom:[30,40,100]},   // Deep Blue
-  {top:[0,0,0], bottom:[0,0,0]},          // Night
-  {top:[200,120,180], bottom:[255,200,180]}, // Sunrise
-  {top:[135,206,250], bottom:[255,255,255]} // Day
+  {top:[255,100,0], bottom:[255,180,80]},
+  {top:[20,30,70], bottom:[30,40,100]},
+  {top:[0,0,0], bottom:[0,0,0]},
+  {top:[200,120,180], bottom:[255,200,180]},
+  {top:[135,206,250], bottom:[255,255,255]}
 ];
 function clamp(n){ return Math.min(255, Math.max(0, Math.round(n))); }
 function lerp(a,b,f){ return clamp(a+(b-a)*f); }
@@ -41,20 +41,34 @@ function drawSky(t){
   const grad=ctx.createLinearGradient(0,0,0,h);
   grad.addColorStop(0, `rgb(${top[0]},${top[1]},${top[2]})`);
   grad.addColorStop(1, `rgb(${bottom[0]},${bottom[1]},${bottom[2]})`);
-  ctx.fillStyle=grad;
+  ctx.fillStyle = grad;
   ctx.fillRect(0,0,w,h);
 }
 
-/* ---------- ROAD & POLES ---------- */
-const poleCount=12;
-const horizon=h*0.3;
-let poles=[];
-for(let i=0;i<poleCount;i++){ poles.push({z: i*200 + 100}); }
+/* ---------- SAFE ROAD & POLES ---------- */
+const poleCount = 12;
+const horizonY = h*0.3;
+const roadWidthBase = 100;
+let polePositions = [];
+for(let i=0;i<poleCount;i++){
+  let y = horizonY + (h-horizonY)/poleCount*i;
+  polePositions.push({y: y});
+}
 
 function drawRoadAndPoles(){
-  const roadWidth = 100;
-  const poleSpacing = 120;
+  // Draw road
   ctx.fillStyle="#333";
   ctx.beginPath();
-  ctx.moveTo(w/2-roadWidth, h);
-  ct
+  ctx.moveTo(w/2 - roadWidthBase, h);
+  ctx.lineTo(w/2 + roadWidthBase, h);
+  ctx.lineTo(w/2 + roadWidthBase, horizonY);
+  ctx.lineTo(w/2 - roadWidthBase, horizonY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw poles and power lines
+  ctx.strokeStyle="#555";
+  ctx.lineWidth=2;
+  for(let i=0;i<polePositions.length;i++){
+    const scale = 1 - (polePositions[i].y - horizonY)/(h - horizonY)*0.8; // simulate perspective
+    const y = polePositions[i].y;
