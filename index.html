@@ -142,24 +142,42 @@ function drawPowerLines(){
 }
 
 /* ---------- FLOCKING ---------- */
-function flock(b){
-  let ax=0, ay=0, cx=0, cy=0, sx=0, sy=0, n=0;
-  for(const o of birds){
-    if(o===b) continue;
-    const dx=o.x-b.x, dy=o.y-b.y;
-    const d=Math.hypot(dx,dy);
-    if(d>0 && d<90){
-      ax+=o.vx; ay+=o.vy; cx+=o.x; cy+=o.y;
-      if(d<22){ sx-=dx/d; sy-=dy/d; }
+function flock(b, others) {
+  let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, n = 0;
+
+  for (const o of others) {
+    if (o === b) continue;
+    const dx = o.x - b.x;
+    const dy = o.y - b.y;
+    const d = Math.hypot(dx, dy);
+
+    if (d > 0 && d < 80) {
+      ax += o.vx;
+      ay += o.vy;
+      cx += o.x;
+      cy += o.y;
+      if (d < 20) {
+        sx -= dx / d;
+        sy -= dy / d;
+      }
       n++;
     }
   }
-  if(n){
-    ax/=n; ay/=n; cx=cx/n-b.x; cy=cy/n-b.y;
-    b.ax+=ax*0.03; b.ay+=ay*0.03; b.ax+=cx*0.002; b.ay+=cy*0.002;
-    b.ax+=sx*0.06; b.ay+=sy*0.06;
+
+  if (n > 0) {
+    ax /= n; ay /= n;
+    cx = cx / n - b.x;
+    cy = cy / n - b.y;
+
+    b.ax += ax * 0.02;
+    b.ay += ay * 0.02;
+    b.ax += cx * 0.001;
+    b.ay += cy * 0.001;
+    b.ax += sx * 0.05;
+    b.ay += sy * 0.05;
   }
 }
+
 
 /* ---------- ANIMATE ---------- */
 function animate(){
@@ -170,32 +188,47 @@ function animate(){
 
     for(const b of birds) flock(b);
 
-    for(const b of birds){
-        b.vx+=b.ax; b.vy+=b.ay;
-        let speed=Math.hypot(b.vx,b.vy);
-        if(speed>3){ b.vx=b.vx/speed*3; b.vy=b.vy/speed*3; }
-        b.x+=b.vx; b.y+=b.vy;
+    for (const b of birds) {
+  b.vx += b.ax;
+  b.vy += b.ay;
 
-        const m=220; 
-        // removed left edge push
-        if(b.x>w-m) b.vx-=0.18;
-        if(b.y<m) b.vy+=0.18;
-        if(b.y>vpY*0.8) b.vy-=0.18;
+  const speed = Math.hypot(b.vx, b.vy);
+  if (speed > 3) {
+    b.vx = (b.vx / speed) * 3;
+    b.vy = (b.vy / speed) * 3;
+  }
 
-        b.ax=b.ay=0; b.wing+=speed*0.25;
+  b.x += b.vx;
+  b.y += b.vy;
 
-        const a=Math.atan2(b.vy,b.vx);
-        const flap=Math.sin(b.wing)*3;
-        ctx.save();
-        ctx.translate(b.x,b.y);
-        ctx.rotate(a);
-        ctx.strokeStyle="rgba(255,255,255,0.9)";
-        ctx.lineWidth=1.1;
-        ctx.beginPath();
-        ctx.moveTo(0,0); ctx.lineTo(-7,-3-flap*0.3);
-        ctx.moveTo(0,0); ctx.lineTo(-7,3+flap*0.3);
-        ctx.stroke();
-        ctx.restore();
+  // soft edge anticipation — KEEP THIS
+  const m = 200;
+  if (b.x < m) b.vx += 0.15;
+  if (b.x > w - m) b.vx -= 0.15;
+  if (b.y < m) b.vy += 0.15;
+  if (b.y > h - m) b.vy -= 0.15;
+
+  b.ax = b.ay = 0;
+  b.wing += speed * 0.25;
+
+  const a = Math.atan2(b.vy, b.vx);
+  const flap = Math.sin(b.wing) * 3;
+
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.rotate(a);
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.lineWidth = 1.1;
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-7, -3 - flap * 0.3);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-7, 3 + flap * 0.3);
+  ctx.stroke();
+  ctx.restore();
+}
+
     }
 
     requestAnimationFrame(animate);
