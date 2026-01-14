@@ -27,22 +27,18 @@ function resetCanvas() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
 
-    // Vanishing point
     vpX = w/2;
     vpY = h*2/3;
 
-    // End point: 1/4 from bottom
-    const endY = h*0.75;
-
-    // Precompute 2 lines per side
+    // Precompute powerline endpoints (1/4 from bottom)
+    const endY = h * 0.75;
     powerLines = [
-        {x: vpX, y: vpY, ex: edgeOffset, ey: endY},          // left 1
-        {x: vpX, y: vpY, ex: edgeOffset+40, ey: endY},       // left 2
-        {x: vpX, y: vpY, ex: w-edgeOffset, ey: endY},        // right 1
-        {x: vpX, y: vpY, ex: w-edgeOffset-40, ey: endY}     // right 2
+        {x: vpX, y: vpY, ex: edgeOffset, ey: endY},          
+        {x: vpX, y: vpY, ex: edgeOffset + 40, ey: endY},     
+        {x: vpX, y: vpY, ex: w - edgeOffset, ey: endY},      
+        {x: vpX, y: vpY, ex: w - edgeOffset - 40, ey: endY}  
     ];
 
-    // Initialize poles
     poles = [];
     for(let i=0;i<poleCount;i++){
         poles.push({t: i/(poleCount-1)});
@@ -82,6 +78,18 @@ function drawRoad(){
     ctx.setLineDash([]);
 }
 
+/* ---------- STATIC POWERLINES ---------- */
+function drawPowerLines(){
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    for(let line of powerLines){
+        ctx.beginPath();
+        ctx.moveTo(line.x, line.y);
+        ctx.lineTo(line.ex, line.ey);
+        ctx.stroke();
+    }
+}
+
 /* ---------- POLES ---------- */
 function drawPoles(){
     ctx.fillStyle = "saddlebrown";
@@ -103,8 +111,16 @@ function drawPoles(){
     }
 }
 
-/* ---------- STATIC POWERLINES ---------- */
-function drawPowerLines(){
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    for
+/* ---------- ANIMATE ---------- */
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPowerLines(); // draw BEFORE poles
+    drawPoles();      // poles behind the lines
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
