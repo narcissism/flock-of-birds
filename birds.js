@@ -11,15 +11,16 @@ window.addEventListener("resize", resize);
 resize();
 
 /* --------------------
-   CREATE BIRDS
+   CREATE BIRDS ABOVE ROAD
 -------------------- */
 const birds = [];
 const COUNT = 300;
+const vpY = h * 0.55; // vanishing point
 
 for (let i = 0; i < COUNT; i++) {
   birds.push({
     x: Math.random() * w,
-    y: Math.random() * h,
+    y: Math.random() * vpY, // spawn above road
     vx: Math.random() * 2 - 1,
     vy: Math.random() * 2 - 1,
     wing: Math.random() * Math.PI * 2
@@ -48,14 +49,13 @@ function drawRoad() {
   ctx.fillStyle = "#333";
   ctx.beginPath();
   const vpX = w / 2;
-  const vpY = h * 0.55; // vanishing point
   ctx.moveTo(vpX, vpY);
   ctx.lineTo(w, h);
   ctx.lineTo(0, h);
   ctx.closePath();
   ctx.fill();
 
-  // Dashed line (simple single line)
+  // Dashed line
   ctx.setLineDash([30, 30]);
   ctx.strokeStyle = "yellow";
   ctx.lineWidth = 4;
@@ -71,14 +71,14 @@ function drawRoad() {
 -------------------- */
 function animate() {
   drawSky();
-  drawRoad(); // draw road below birds
+  drawRoad(); // road drawn first, birds drawn on top
 
   for (const b of birds) {
     b.x += b.vx;
     b.y += b.vy;
 
     if (b.x < 0 || b.x > w) b.vx *= -1;
-    if (b.y < 0 || b.y > h) b.vy *= -1;
+    if (b.y < 0 || b.y > vpY) b.vy *= -1; // keep birds above road
 
     b.wing += 0.2;
 
