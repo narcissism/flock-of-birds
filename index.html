@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Canvas Test</title>
+  <title>Murmuration</title>
   <style>
     html, body {
       margin: 0;
@@ -32,14 +32,39 @@ resize();
 window.addEventListener("resize", resize);
 
 /* --------------------
-   SUNSET SKY
+   TIME OF DAY
 -------------------- */
-function drawSky() {
+function skyColor(t) {
+  // slow cycle: ~2 minutes per full loop
+  const cycle = (Math.sin(t * 0.00005) + 1) / 2;
+
+  const top = {
+    r: 11 + cycle * 20,
+    g: 16 + cycle * 30,
+    b: 38 + cycle * 90
+  };
+
+  const bottom = {
+    r: 246 - cycle * 120,
+    g: 178 - cycle * 80,
+    b: 107 - cycle * 40
+  };
+
+  return { top, bottom };
+}
+
+function drawSky(t) {
+  const c = skyColor(t);
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, "#0b1026");
-  g.addColorStop(0.4, "#3a1c5a");
-  g.addColorStop(0.7, "#b24a3a");
-  g.addColorStop(1, "#f6b26b");
+
+  g.addColorStop(
+    0,
+    `rgb(${c.top.r},${c.top.g},${c.top.b})`
+  );
+  g.addColorStop(
+    1,
+    `rgb(${c.bottom.r},${c.bottom.g},${c.bottom.b})`
+  );
 
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
@@ -49,7 +74,7 @@ function drawSky() {
    BIRDS
 -------------------- */
 const birds = [];
-const COUNT = 350;
+const COUNT = 360; // same density, slightly tighter feel
 
 for (let i = 0; i < COUNT; i++) {
   const a = Math.random() * Math.PI * 2;
@@ -64,16 +89,8 @@ for (let i = 0; i < COUNT; i++) {
   });
 }
 
-function limit(v, max) {
-  const m = Math.hypot(v.x, v.y);
-  if (m > max) {
-    v.x = (v.x / m) * max;
-    v.y = (v.y / m) * max;
-  }
-}
-
 /* --------------------
-   FLOCKING
+   FLOCKING (TIGHTER)
 -------------------- */
 function flock(b, others) {
   let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, n = 0;
@@ -84,12 +101,12 @@ function flock(b, others) {
     const dy = o.y - b.y;
     const d = Math.hypot(dx, dy);
 
-    if (d > 0 && d < 80) {
+    if (d > 0 && d < 85) {
       ax += o.vx;
       ay += o.vy;
       cx += o.x;
       cy += o.y;
-      if (d < 20) {
+      if (d < 22) {
         sx -= dx / d;
         sy -= dy / d;
       }
@@ -102,20 +119,21 @@ function flock(b, others) {
     cx = cx / n - b.x;
     cy = cy / n - b.y;
 
-    b.ax += ax * 0.02;
-    b.ay += ay * 0.02;
-    b.ax += cx * 0.001;
-    b.ay += cy * 0.001;
-    b.ax += sx * 0.05;
-    b.ay += sy * 0.05;
+    // tighter cohesion & alignment
+    b.ax += ax * 0.03;
+    b.ay += ay * 0.03;
+    b.ax += cx * 0.002;
+    b.ay += cy * 0.002;
+    b.ax += sx * 0.06;
+    b.ay += sy * 0.06;
   }
 }
 
 /* --------------------
-   ANIMATION LOOP
+   ANIMATION
 -------------------- */
-function animate() {
-  drawSky();
+function animate(t) {
+  drawSky(t);
 
   for (const b of birds) flock(b, birds);
 
@@ -124,24 +142,26 @@ function animate() {
     b.vy += b.ay;
 
     const speed = Math.hypot(b.vx, b.vy);
-    if (speed > 3) {
-      b.vx = (b.vx / speed) * 3;
-      b.vy = (b.vy / speed) * 3;
+    const max = 3;
+    if (speed > max) {
+      b.vx = (b.vx / speed) * max;
+      b.vy = (b.vy / speed) * max;
     }
 
     b.x += b.vx;
     b.y += b.vy;
 
-    // soft edge anticipation
-    const m = 200;
-    if (b.x < m) b.vx += 0.15;
-    if (b.x > w - m) b.vx -= 0.15;
-    if (b.y < m) b.vy += 0.15;
-    if (b.y > h - m) b.vy -= 0.15;
+    // edge anticipation
+    const m = 220;
+    if (b.x < m) b.vx += 0.18;
+    if (b.x > w - m) b.vx -= 0.18;
+    if (b.y < m) b.vy += 0.18;
+    if (b.y > h - m) b.vy -= 0.18;
 
     b.ax = b.ay = 0;
     b.wing += speed * 0.25;
 
+    // draw bird
     const a = Math.atan2(b.vy, b.vx);
     const flap = Math.sin(b.wing) * 3;
 
@@ -166,6 +186,7 @@ function animate() {
 
 animate();
 </script>
+
 
 
 
