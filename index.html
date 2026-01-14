@@ -20,8 +20,9 @@ const poleCount = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
 
-// Fixed static powerline end points
-let powerLineEnds = [];
+// Precomputed static endpoints for 2 lines per side
+let leftEnds = [];
+let rightEnds = [];
 
 function resetCanvas() {
     w = canvas.width = window.innerWidth;
@@ -34,12 +35,14 @@ function resetCanvas() {
         poles.push({t: i/(poleCount-1)});
     }
 
-    // Precompute static endpoints for 2 lines per side
-    powerLineEnds = [
-        {x: edgeOffset, y: h},          // left line 1
-        {x: edgeOffset + 40, y: h},     // left line 2
-        {x: w - edgeOffset, y: h},      // right line 1
-        {x: w - edgeOffset - 40, y: h}  // right line 2
+    // Fully static powerline endpoints
+    leftEnds = [
+        {x: edgeOffset, y: h},
+        {x: edgeOffset + 40, y: h}
+    ];
+    rightEnds = [
+        {x: w - edgeOffset, y: h},
+        {x: w - edgeOffset - 40, y: h}
     ];
 }
 window.addEventListener("resize", resetCanvas);
@@ -51,75 +54,4 @@ function drawSky(){
     grad.addColorStop(0, "orange");
     grad.addColorStop(1, "darkblue");
     ctx.fillStyle = grad;
-    ctx.fillRect(0,0,w,h);
-}
-
-/* ---------- ROAD ---------- */
-function drawRoad(){
-    ctx.fillStyle = "#333";
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.fill();
-
-    dashOffset += 1.5;
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = 4;
-    ctx.setLineDash([30,30]);
-    ctx.lineDashOffset = -dashOffset;
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w/2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-}
-
-/* ---------- POLES ---------- */
-function drawPoles(){
-    ctx.fillStyle = "saddlebrown";
-
-    for(let i=0;i<poles.length;i++){
-        let p = poles[i];
-        p.t += 0.003;
-        if(p.t > 1) p.t = 0;
-
-        const y = vpY + (h - vpY) * p.t;
-        const xLeft = vpX - (vpX - edgeOffset) * p.t;
-        const xRight = vpX + (w - vpX - edgeOffset) * p.t;
-        const poleHeight = 1 + 200*p.t;
-        const poleWidth = Math.max(1, 1 + 10*p.t);
-
-        ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-    }
-}
-
-/* ---------- STATIC POWERLINES ---------- */
-function drawPowerLines(){
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-
-    for(let i=0;i<powerLineEnds.length;i++){
-        const end = powerLineEnds[i];
-        ctx.beginPath();
-        ctx.moveTo(vpX, vpY);  // vanishing point
-        ctx.lineTo(end.x, end.y); // fixed end point
-        ctx.stroke();
-    }
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawRoad();
-    drawPoles();
-    drawPowerLines();  // fully static, safe
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+    ctx.fillRect(0,0,w
