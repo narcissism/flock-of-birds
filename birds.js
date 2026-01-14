@@ -59,33 +59,23 @@ function drawRoad() {
   ctx.setLineDash([30, 30]);
   ctx.strokeStyle = "yellow";
 
-  // Single dashed line from vanishing point to bottom center
-  const lineX1 = vpX;
-  const lineY1 = vpY;
-  const lineX2 = w / 2;
-  const lineY2 = h;
+  // Top half of the line
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(vpX + (w/2 - vpX)/2, vpY + (h - vpY)/2); // midpoint
+  ctx.stroke();
 
-  const segments = 100; // divide into small sections just for lineWidth growth
-  for (let i = 0; i < segments; i++) {
-    const t1 = i / segments;
-    const t2 = (i + 1) / segments;
-
-    const xStart = lineX1 * (1 - t1) + lineX2 * t1;
-    const yStart = lineY1 * (1 - t1) + lineY2 * t1;
-    const xEnd = lineX1 * (1 - t2) + lineX2 * t2;
-    const yEnd = lineY1 * (1 - t2) + lineY2 * t2;
-
-    // Line width grows from 4 at top to 8 at bottom
-    ctx.lineWidth = 4 + 4 * t2;
-
-    ctx.beginPath();
-    ctx.moveTo(xStart, yStart);
-    ctx.lineTo(xEnd, yEnd);
-    ctx.stroke();
-  }
+  // Bottom half of the line (twice as wide)
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(vpX + (w/2 - vpX)/2, vpY + (h - vpY)/2);
+  ctx.lineTo(w/2, h); // bottom center
+  ctx.stroke();
 
   ctx.setLineDash([]); // reset dash
 }
+
 
 /* --------------------
    UPDATE & DRAW
