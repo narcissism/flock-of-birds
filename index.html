@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road</title>
+<title>Murmuration Road Scene</title>
 <style>
   html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black; }
   canvas { display:block; }
@@ -17,30 +17,66 @@ const ctx = canvas.getContext("2d");
 let w, h, vpX, vpY;
 const birds = [];
 const COUNT = 300;
+let poles = [];
+const POLE_COUNT = 6;
+const edgeOffset = 50;
+let powerLines = [];
 
+/* --------------------
+   RESIZE CANVAS
+-------------------- */
 function resize() {
   w = canvas.width = window.innerWidth;
   h = canvas.height = window.innerHeight;
-  vpX = w/2;
-  vpY = h*0.55;
+  vpX = w / 2;
+  vpY = h * 0.55;
 
-  // Recreate birds after knowing canvas size
+  createBirds();
+  createPolesAndLines();
+}
+window.addEventListener("resize", resize);
+resize();
+
+/* --------------------
+   CREATE BIRDS
+-------------------- */
+function createBirds() {
   birds.length = 0;
   for(let i=0;i<COUNT;i++){
     birds.push({
       x: Math.random()*w,
-      y: Math.random()*vpY*0.8,  // spawn above road
+      y: Math.random()*h,
       vx: Math.random()*2-1,
       vy: Math.random()*2-1,
       wing: Math.random()*Math.PI*2
     });
   }
 }
-window.addEventListener("resize", resize);
-resize();
 
-/* ---------- DRAW SKY ---------- */
-function drawSky(){
+/* --------------------
+   CREATE POLES & POWERLINES
+-------------------- */
+function createPolesAndLines() {
+  poles = [];
+  powerLines = [];
+  for(let i=0;i<POLE_COUNT;i++){
+    poles.push({t:i/(POLE_COUNT-1)});
+  }
+
+  const endYTop = h*0.75;
+  const endYBottom = h*0.77;
+  powerLines = [
+    {x: vpX, y: vpY, ex: edgeOffset, ey: endYTop},
+    {x: vpX, y: vpY, ex: edgeOffset+40, ey: endYBottom},
+    {x: vpX, y: vpY, ex: w-edgeOffset, ey: endYTop},
+    {x: vpX, y: vpY, ex: w-edgeOffset-40, ey: endYBottom}
+  ];
+}
+
+/* --------------------
+   DRAW SKY
+-------------------- */
+function drawSky() {
   const grad = ctx.createLinearGradient(0,0,0,h);
   grad.addColorStop(0,"#0b1026");
   grad.addColorStop(0.5,"#5a246d");
@@ -50,7 +86,31 @@ function drawSky(){
   ctx.fillRect(0,0,w,h);
 }
 
-/* ---------- DRAW ROAD ---------- */
+/* --------------------
+   DRAW POLES
+-------------------- */
+function drawPoles(){
+  ctx.fillStyle = "saddlebrown";
+  for(let p of poles){
+    p.t += 0.003;
+    if(p.t>1) p.t=0;
+
+    const y = vpY + (h - vpY) * p.t;
+    const xLeft = vpX - (vpX - edgeOffset) * p.t;
+    const xRight = vpX + (w - vpX - edgeOffset) * p.t;
+    const poleHeight = 1 + 200*p.t;
+    const poleWidth = Math.max(1, 1 + 10*p.t);
+    const topLeftY = y - poleHeight;
+    const topRightY = y - poleHeight;
+
+    ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
+    ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
+  }
+}
+
+/* --------------------
+   DRAW ROAD
+-------------------- */
 function drawRoad(){
   ctx.fillStyle="#333";
   ctx.beginPath();
@@ -70,44 +130,42 @@ function drawRoad(){
   ctx.setLineDash([]);
 }
 
-/* ---------- DRAW BIRDS ---------- */
-function drawBirds(){
-  for(const b of birds){
-    b.x += b.vx;
-    b.y += b.vy;
-
-    // Bounce off edges
-    if(b.x<0||b.x>w) b.vx*=-1;
-    if(b.y<0||b.y>vpY*0.8) b.vy*=-1;
-
-    b.wing+=0.2;
-    const a = Math.atan2(b.vy,b.vx);
-    const flap = Math.sin(b.wing)*3;
-
-    ctx.save();
-    ctx.translate(b.x,b.y);
-    ctx.rotate(a);
-    ctx.strokeStyle="white";
-    ctx.lineWidth=2;
+/* --------------------
+   DRAW POWERLINES
+-------------------- */
+function drawPowerLines(){
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  for(let line of powerLines){
     ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.lineTo(-8,-4-flap*0.5);
-    ctx.moveTo(0,0);
-    ctx.lineTo(-8,4+flap*0.5);
+    ctx.moveTo(line.x,line.y);
+    ctx.lineTo(line.ex,line.ey);
     ctx.stroke();
-    ctx.restore();
   }
 }
 
-/* ---------- ANIMATE ---------- */
-function animate(){
-  drawSky();
-  drawRoad();
-  drawBirds();
-  requestAnimationFrame(animate);
-}
+/* --------------------
+   DRAW BIRDS WITH MURMURATION
+-------------------- */
+function drawBirds(){
+  const neighborDist = 50; // simple separation
+  const cohesion = 0.01;
+  const alignment = 0.05;
+  const separation = 0.05;
 
-animate();
-</script>
-</body>
-</html>
+  for(let b of birds){
+    let cx=0,cy=0,avx=0,avy=0,count=0;
+
+    for(let other of birds){
+      const dx = other.x - b.x;
+      const dy = other.y - b.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist>0 && dist<neighborDist){
+        cx += other.x;
+        cy += other.y;
+        avx += other.vx;
+        avy += other.vy;
+        count++;
+        // separation
+        b.vx -= dx*separation/dist;
+        b.vy -= dy*separatio*
