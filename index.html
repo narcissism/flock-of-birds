@@ -89,3 +89,48 @@ function drawPoles(){
         const topRightY = Math.max(0, y - poleHeight);
 
         ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
+        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
+    }
+}
+
+/* ---------- STATIC POWERLINES ABOVE ROAD ---------- */
+function drawPowerLines(){
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+
+    // left side
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(edgeOffset, powerLineY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(edgeOffset + 40, powerLineY);
+    ctx.stroke();
+
+    // right side
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w - edgeOffset, powerLineY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w - edgeOffset - 40, powerLineY);
+    ctx.stroke();
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPoles();
+    drawPowerLines(); // **draw last to stay visible**
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
