@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Refined</title>
+<title>Murmuration Road Safe</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -40,7 +40,6 @@ const skyStages = [
   {top:[200,120,180], bottom:[255,200,180]},
   {top:[135,206,250], bottom:[255,255,255]}
 ];
-
 function clamp(n){ return Math.min(255, Math.max(0, Math.round(n))); }
 function lerp(a,b,f){ return clamp(a+(b-a)*f); }
 
@@ -77,7 +76,7 @@ function drawRoad(){
     ctx.fill();
 
     // slower dashed center line
-    dashOffset += 2; // slower
+    dashOffset += 1.5; // slower
     ctx.strokeStyle = "yellow";
     ctx.lineWidth = 4;
     ctx.setLineDash([30,30]);
@@ -97,11 +96,67 @@ function drawPoles(){
         if(p.t > 1) p.t = 0;
 
         const y = vpY + (h - vpY)*p.t;
-        const leftX = vpX - roadBottomHalfWidth*p.t*1.5;  // extend farther
-        const rightX = vpX + roadBottomHalfWidth*p.t*1.5;
+        const leftX = Math.max(0, vpX - roadBottomHalfWidth*p.t*1.5);
+        const rightX = Math.min(w, vpX + roadBottomHalfWidth*p.t*1.5);
 
-        const poleHeight = 0 + 250*p.t; // grow from zero
-        const poleWidth = 0 + 20*p.t;
+        // minimal height/width for safety
+        const poleHeight = 1 + 250*p.t;
+        const poleWidth = 1 + 20*p.t;
 
-        leftPoles.push({x: leftX, y, poleHeight, poleWidth});
-        rightPoles.push({x: rightX, y, poleHeight, poleWidth});
+        leftPoles.push({x: leftX, y, poleHeight, poleWidth, t: p.t});
+        rightPoles.push({x: rightX, y, poleHeight, poleWidth, t: p.t});
+    }
+
+    ctx.fillStyle = "saddlebrown";
+    ctx.strokeStyle = "saddlebrown";
+
+    // draw left poles and swooping lines
+    for(let i=0;i<leftPoles.length;i++){
+        const p = leftPoles[i];
+        ctx.beginPath();
+        ctx.rect(p.x - p.poleWidth/2, p.y - p.poleHeight, p.poleWidth, p.poleHeight);
+        ctx.fill();
+
+        // connect to next pole if visible and t>0.05
+        if(i < leftPoles.length-1){
+            const next = leftPoles[i+1];
+            if(p.t > 0.05 && next.t > 0.05){
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y - p.poleHeight*0.6);
+                ctx.quadraticCurveTo((p.x+next.x)/2, (p.y+next.y)/2 - 30, next.x, next.y - next.poleHeight*0.6);
+                ctx.stroke();
+            }
+        }
+    }
+
+    // draw right poles and swooping lines
+    for(let i=0;i<rightPoles.length;i++){
+        const p = rightPoles[i];
+        ctx.beginPath();
+        ctx.rect(p.x - p.poleWidth/2, p.y - p.poleHeight, p.poleWidth, p.poleHeight);
+        ctx.fill();
+
+        if(i < rightPoles.length-1){
+            const next = rightPoles[i+1];
+            if(p.t > 0.05 && next.t > 0.05){
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y - p.poleHeight*0.6);
+                ctx.quadraticCurveTo((p.x+next.x)/2, (p.y+next.y)/2 - 30, next.x, next.y - next.poleHeight*0.6);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(t){
+    drawSky(t);
+    drawRoad();
+    drawPoles();
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
