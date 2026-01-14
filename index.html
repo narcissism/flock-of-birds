@@ -23,9 +23,6 @@ const edgeOffset = 50;
 let dashOffset = 0;
 let skyTime = 0;
 
-// Wind field for flock
-function perlinNoise(x,y){return (Math.sin(x*0.001+y*0.001)+1)/2;} // simple smooth noise
-
 function resize() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
@@ -37,16 +34,17 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* ---------- CREATE BIRDS ---------- */
+/* ---------- CREATE BIRDS WITH ORGANIC SCHOOL BEHAVIOR ---------- */
 function createBirds(){
     birds = [];
     for(let i=0;i<BIRD_COUNT;i++){
         birds.push({
             x: Math.random()*w,
             y: Math.random()*h,
-            vx: Math.random()*0.5-0.25,  // very slow
-            vy: Math.random()*0.5-0.25,
-            wing: Math.random()*Math.PI*2
+            vx: (Math.random()*1.2 - 0.6),
+            vy: (Math.random()*1.2 - 0.6),
+            wing: Math.random()*Math.PI*2,
+            maxSpeed: 1.2
         });
     }
 }
@@ -59,7 +57,7 @@ function createPoles(){
     }
 }
 
-/* ---------- LERP COLOR ---------- */
+/* ---------- LINEAR COLOR INTERPOLATION ---------- */
 function lerpColor(c0,c1,f){
     const n0=parseInt(c0.slice(1),16);
     const n1=parseInt(c1.slice(1),16);
@@ -71,7 +69,7 @@ function lerpColor(c0,c1,f){
 
 /* ---------- DRAW SKY ---------- */
 function drawSky(){
-    skyTime += 0.0003;
+    skyTime += 0.0005;
     if(skyTime>1) skyTime=0;
 
     const colors = [
@@ -128,7 +126,7 @@ function drawRoad(){
     ctx.closePath();
     ctx.fill();
 
-    dashOffset -= 1.5; // slower
+    dashOffset -= 2; 
     ctx.setLineDash([30,30]);
     ctx.lineDashOffset = dashOffset;
     ctx.strokeStyle="yellow";
@@ -140,7 +138,7 @@ function drawRoad(){
     ctx.setLineDash([]);
 }
 
-/* ---------- STATIC POWERLINES ---------- */
+/* ---------- DRAW STATIC POWERLINES ---------- */
 function drawPowerLines(){
     ctx.strokeStyle="black";
     ctx.lineWidth=2;
@@ -153,31 +151,46 @@ function drawPowerLines(){
     ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset-40,bottomY); ctx.stroke();
 }
 
-/* ---------- DRAW BIRDS WITH NATURAL MURMURATION ---------- */
+/* ---------- DRAW BIRDS WITH ORGANIC SCHOOL BEHAVIOR ---------- */
 function drawBirds(){
-    // Compute flock average velocity for global cohesion
-    let avgVX=0, avgVY=0;
-    for(let b of birds){ avgVX+=b.vx; avgVY+=b.vy; }
-    avgVX/=birds.length; avgVY/=birds.length;
+    const neighborDist = 50;
+    const cohesion = 0.02;
+    const alignment = 0.05;
+    const separation = 0.03;
 
     for(let b of birds){
-        // cohesion toward flock direction
-        b.vx += (avgVX - b.vx)*0.01;
-        b.vy += (avgVY - b.vy)*0.01;
+        let cx=0,cy=0,avx=0,avy=0,count=0;
 
-        // small random wind influence
-        const windAngle = perlinNoise(b.x,b.y)*Math.PI*2;
-        b.vx += Math.cos(windAngle)*0.001;
-        b.vy += Math.sin(windAngle)*0.001;
+        for(let other of birds){
+            const dx=other.x-b.x;
+            const dy=other.y-b.y;
+            const dist=Math.sqrt(dx*dx+dy*dy);
+            if(dist>0 && dist<neighborDist){
+                cx+=other.x; cy+=other.y;
+                avx+=other.vx; avy+=other.vy;
+                count++;
+                b.vx -= dx*separation/dist;
+                b.vy -= dy*separation/dist;
+            }
+        }
 
-        // clamp speed
+        if(count>0){
+            cx/=count; cy/=count; avx/=count; avy/=count;
+            b.vx += (cx-b.x)*cohesion + (avx-b.vx)*alignment;
+            b.vy += (cy-b.y)*cohesion + (avy-b.vy)*alignment;
+        }
+
+        // gently clamp speed
         const speed = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
-        if(speed>0.5){ b.vx=b.vx*0.5/speed; b.vy=b.vy*0.5/speed; }
+        if(speed > b.maxSpeed){
+            b.vx = (b.vx/speed)*b.maxSpeed;
+            b.vy = (b.vy/speed)*b.maxSpeed;
+        }
 
         b.x += b.vx;
         b.y += b.vy;
 
-        // wrap edges horizontally
+        // wrap horizontally for continuity
         if(b.x<0) b.x=w;
         if(b.x>w) b.x=0;
         if(b.y<0) b.y=h;
