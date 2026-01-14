@@ -18,27 +18,21 @@
   </style>
 </head>
 <body>
-
 <canvas id="canvas"></canvas>
-
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let w = canvas.width = window.innerWidth;
 let h = canvas.height = window.innerHeight;
-
 window.addEventListener("resize", () => {
   w = canvas.width = window.innerWidth;
   h = canvas.height = window.innerHeight;
 });
 
-/* =========================
-   BIRDS
-========================= */
+/* ---------- BIRDS ---------- */
 const birds = [];
 const COUNT = 340;
-
 for (let i = 0; i < COUNT; i++) {
   const a = Math.random() * Math.PI * 2;
   birds.push({
@@ -52,12 +46,85 @@ for (let i = 0; i < COUNT; i++) {
   });
 }
 
-/* =========================
-   TIME-OF-DAY SKY CYCLE
-========================= */
-function lerpColor(c1, c2, t) {
-  return c1.map((v, i) => Math.round(v + (c2[i]-v)*t));
+/* ---------- SAFE DAY-NIGHT SKY ---------- */
+function drawSky(t) {
+  // t in ms
+  const cycle = Math.sin(t * 0.00002) * 0.5 + 0.5; // 0→1→0 sine
+  // define top/bottom colors for day (sky blue) → sunset → night
+  const top = [
+    Math.floor(135 * cycle + 10*(1-cycle)),   // R
+    Math.floor(206 * cycle + 15*(1-cycle)),   // G
+    Math.floor(250 * cycle + 40*(1-cycle))    // B
+  ];
+  const bottom = [
+    Math.floor(255 * cycle + 120*(1-cycle)),
+    Math.floor(255 * cycle + 180*(1-cycle)),
+    Math.floor(255 * cycle + 240*(1-cycle))
+  ];
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, `rgb(${top[0]},${top[1]},${top[2]})`);
+  g.addColorStop(1, `rgb(${bottom[0]},${bottom[1]},${bottom[2]})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
 }
 
-const keyColors = [
-  // [t]()
+/* ---------- FLOCKING ---------- */
+function flock(b) {
+  let ax=0, ay=0, cx=0, cy=0, sx=0, sy=0, n=0;
+  for (const o of birds) {
+    if(o===b) continue;
+    const dx=o.x-b.x, dy=o.y-b.y;
+    const d=Math.hypot(dx,dy);
+    if(d>0 && d<90){
+      ax+=o.vx; ay+=o.vy; cx+=o.x; cy+=o.y;
+      if(d<22){ sx-=dx/d; sy-=dy/d; }
+      n++;
+    }
+  }
+  if(n){
+    ax/=n; ay/=n; cx=cx/n-b.x; cy=cy/n-b.y;
+    b.ax+=ax*0.03; b.ay+=ay*0.03; b.ax+=cx*0.002; b.ay+=cy*0.002;
+    b.ax+=sx*0.06; b.ay+=sy*0.06;
+  }
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(t){
+  drawSky(t);
+  for(const b of birds) flock(b);
+  for(const b of birds){
+    b.vx+=b.ax; b.vy+=b.ay;
+    let speed=Math.hypot(b.vx,b.vy);
+    if(speed>3){ b.vx=b.vx/speed*3; b.vy=b.vy/speed*3; }
+    b.x+=b.vx; b.y+=b.vy;
+
+    // edge avoidance
+    const m=220;
+    if(b.x<m) b.vx+=0.18;
+    if(b.x>w-m) b.vx-=0.18;
+    if(b.y<m) b.vy+=0.18;
+    if(b.y>h-m) b.vy-=0.18;
+
+    b.ax=b.ay=0; b.wing+=speed*0.25;
+
+    // draw bird
+    const a=Math.atan2(b.vy,b.vx);
+    const flap=Math.sin(b.wing)*3;
+    ctx.save();
+    ctx.translate(b.x,b.y);
+    ctx.rotate(a);
+    ctx.strokeStyle="rgba(255,255,255,0.9)";
+    ctx.lineWidth=1.1;
+    ctx.beginPath();
+    ctx.moveTo(0,0); ctx.lineTo(-7,-3-flap*0.3);
+    ctx.moveTo(0,0); ctx.lineTo(-7,3+flap*0.3);
+    ctx.stroke();
+    ctx.restore();
+  }
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
