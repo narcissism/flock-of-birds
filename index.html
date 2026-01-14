@@ -16,7 +16,7 @@ const ctx = canvas.getContext("2d");
 
 let w,h,vpX,vpY;
 let birds = [];
-const BIRD_COUNT = 420;
+const BIRD_COUNT = 350;
 let poles = [];
 const POLE_COUNT = 6;
 const edgeOffset = 50;
@@ -34,17 +34,19 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* ---------- CREATE BIRDS WITH ORGANIC MURMURATION ---------- */
+/* ---------- CREATE BIRDS ---------- */
 function createBirds(){
     birds = [];
     for(let i=0;i<BIRD_COUNT;i++){
+        const a = Math.random()*Math.PI*2;
         birds.push({
             x: Math.random()*w,
-            y: Math.random()*vpY*0.8, // above road
-            vx: Math.random()*1.2-0.6,
-            vy: Math.random()*1.2-0.6,
-            wing: Math.random()*Math.PI*2,
-            maxSpeed: 1.2
+            y: Math.random()*vpY*0.8,
+            vx: Math.cos(a),
+            vy: Math.sin(a),
+            ax:0,
+            ay:0,
+            wing: Math.random()*Math.PI*2
         });
     }
 }
@@ -57,17 +59,7 @@ function createPoles(){
     }
 }
 
-/* ---------- LERP COLOR ---------- */
-function lerpColor(c0,c1,f){
-    const n0=parseInt(c0.slice(1),16);
-    const n1=parseInt(c1.slice(1),16);
-    const r = ((n0>>16)&0xFF)*(1-f) + ((n1>>16)&0xFF)*f;
-    const g = ((n0>>8)&0xFF)*(1-f) + ((n1>>8)&0xFF)*f;
-    const b = (n0&0xFF)*(1-f) + (n1&0xFF)*f;
-    return `rgb(${r|0},${g|0},${b|0})`;
-}
-
-/* ---------- DRAW SKY ---------- */
+/* ---------- SKY ---------- */
 function drawSky(){
     skyTime += 0.0005;
     if(skyTime>1) skyTime=0;
@@ -86,6 +78,15 @@ function drawSky(){
     const t1 = colors[i+1].t;
     const f = (t1-t0===0)?0:(skyTime-t0)/(t1-t0);
 
+    function lerpColor(c0,c1,f){
+        const n0=parseInt(c0.slice(1),16);
+        const n1=parseInt(c1.slice(1),16);
+        const r = ((n0>>16)&0xFF)*(1-f) + ((n1>>16)&0xFF)*f;
+        const g = ((n0>>8)&0xFF)*(1-f) + ((n1>>8)&0xFF)*f;
+        const b = (n0&0xFF)*(1-f) + (n1&0xFF)*f;
+        return `rgb(${r|0},${g|0},${b|0})`;
+    }
+
     const top = lerpColor(colors[i].top, colors[i+1].top, f);
     const mid = lerpColor(colors[i].mid, colors[i+1].mid, f);
     const bottom = lerpColor(colors[i].bottom, colors[i+1].bottom, f);
@@ -98,25 +99,7 @@ function drawSky(){
     ctx.fillRect(0,0,w,h);
 }
 
-/* ---------- DRAW POLES ---------- */
-function drawPoles(){
-    ctx.fillStyle="saddlebrown";
-    for(let p of poles){
-        p.t += 0.002;
-        if(p.t>1) p.t=0;
-
-        const y = vpY + (h - vpY)*p.t;
-        const xLeft = vpX - (vpX - edgeOffset)*p.t;
-        const xRight = vpX + (w - vpX - edgeOffset)*p.t;
-        const poleHeight = 200*p.t + 10;
-        const poleWidth = 10*p.t + 2;
-
-        ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-    }
-}
-
-/* ---------- DRAW ROAD ---------- */
+/* ---------- ROAD ---------- */
 function drawRoad(){
     ctx.fillStyle="#333";
     ctx.beginPath();
@@ -138,6 +121,24 @@ function drawRoad(){
     ctx.setLineDash([]);
 }
 
+/* ---------- POLES ---------- */
+function drawPoles(){
+    ctx.fillStyle="saddlebrown";
+    for(let p of poles){
+        p.t += 0.002;
+        if(p.t>1) p.t=0;
+
+        const y = vpY + (h - vpY)*p.t;
+        const xLeft = vpX - (vpX - edgeOffset)*p.t;
+        const xRight = vpX + (w - vpX - edgeOffset)*p.t;
+        const poleHeight = 200*p.t + 10;
+        const poleWidth = 10*p.t + 2;
+
+        ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+    }
+}
+
 /* ---------- STATIC POWERLINES ---------- */
 function drawPowerLines(){
     ctx.strokeStyle="black";
@@ -151,48 +152,95 @@ function drawPowerLines(){
     ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset-40,bottomY); ctx.stroke();
 }
 
-/* ---------- DRAW BIRDS USING FISH-SCHOOL LOGIC ---------- */
-function drawBirds(){
-    const neighborDist = 50;
-    const cohesion = 0.02;
-    const alignment = 0.05;
-    const separation = 0.03;
+/* ---------- FLOCKING LOGIC ---------- */
+function flock(b, others) {
+  let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, n = 0;
 
-    for(let b of birds){
-        let cx=0, cy=0, avx=0, avy=0, count=0;
+  for (const o of others) {
+    if (o === b) continue;
+    const dx = o.x - b.x;
+    const dy = o.y - b.y;
+    const d = Math.hypot(dx, dy);
 
-        for(let other of birds){
-            const dx = other.x - b.x;
-            const dy = other.y - b.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if(dist>0 && dist<neighborDist){
-                cx += other.x; cy += other.y;
-                avx += other.vx; avy += other.vy;
-                count++;
-                b.vx -= dx*separation/dist;
-                b.vy -= dy*separation/dist;
-            }
-        }
+    if (d > 0 && d < 80) {
+      ax += o.vx;
+      ay += o.vy;
+      cx += o.x;
+      cy += o.y;
+      if (d < 20) {
+        sx -= dx / d;
+        sy -= dy / d;
+      }
+      n++;
+    }
+  }
 
-        if(count>0){
-            cx/=count; cy/=count; avx/=count; avy/=count;
-            b.vx += (cx - b.x)*cohesion + (avx - b.vx)*alignment;
-            b.vy += (cy - b.y)*cohesion + (avy - b.vy)*alignment;
-        }
+  if (n > 0) {
+    ax /= n; ay /= n;
+    cx = cx / n - b.x;
+    cy = cy / n - b.y;
 
-        const speed = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
-        if(speed > b.maxSpeed){
-            b.vx = (b.vx/speed)*b.maxSpeed;
-            b.vy = (b.vy/speed)*b.maxSpeed;
-        }
+    b.ax += ax * 0.02;
+    b.ay += ay * 0.02;
+    b.ax += cx * 0.001;
+    b.ay += cy * 0.001;
+    b.ax += sx * 0.05;
+    b.ay += sy * 0.05;
+  }
+}
 
-        b.x += b.vx;
-        b.y += b.vy;
+/* ---------- ANIMATE ---------- */
+function animate() {
+  drawSky();
+  drawRoad();
+  drawPoles();
+  drawPowerLines();
 
-        // wrap horizontally only
-        if(b.x<0) b.x=w;
-        if(b.x>w) b.x=0;
-        if(b.y<0) b.y=vpY*0.8;
-        if(b.y>vpY*0.8) b.y=vpY*0.8;
+  for (const b of birds) flock(b, birds);
 
-        b.win
+  for (const b of birds) {
+    b.vx += b.ax;
+    b.vy += b.ay;
+
+    const speed = Math.hypot(b.vx, b.vy);
+    if (speed > 3) {
+      b.vx = (b.vx / speed) * 3;
+      b.vy = (b.vy / speed) * 3;
+    }
+
+    b.x += b.vx;
+    b.y += b.vy;
+
+    const m = 200;
+    if (b.x < m) b.vx += 0.15;
+    if (b.x > w - m) b.vx -= 0.15;
+    if (b.y < m) b.vy += 0.15;
+    if (b.y > vpY*0.8) b.vy -= 0.15;
+
+    b.ax = b.ay = 0;
+    b.wing += speed*0.25;
+
+    const a = Math.atan2(b.vy, b.vx);
+    const flap = Math.sin(b.wing)*3;
+
+    ctx.save();
+    ctx.translate(b.x,b.y);
+    ctx.rotate(a);
+    ctx.strokeStyle="rgba(255,255,255,0.9)";
+    ctx.lineWidth=1.1;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(-7,-3-flap*0.3);
+    ctx.moveTo(0,0);
+    ctx.lineTo(-7,3+flap*0.3);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
