@@ -15,61 +15,15 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let w,h,vpX,vpY;
-const birds = [];
-const COUNT = 300;
-let poles = [];
-let powerLines = [];
-const POLE_COUNT = 6;
-const edgeOffset = 50;
 
-/* ---------- RESIZE & INITIALIZE ---------- */
 function resize(){
   w = canvas.width = window.innerWidth;
   h = canvas.height = window.innerHeight;
   vpX = w/2;
   vpY = h*0.55;
-
-  createBirds();
-  createPoles();
-  createPowerLines();
 }
 window.addEventListener("resize",resize);
 resize();
-
-/* ---------- CREATE BIRDS ---------- */
-function createBirds(){
-  birds.length=0;
-  for(let i=0;i<COUNT;i++){
-    birds.push({
-      x:Math.random()*w,
-      y:Math.random()*h,
-      vx:Math.random()*2-1,
-      vy:Math.random()*2-1,
-      wing:Math.random()*Math.PI*2
-    });
-  }
-}
-
-/* ---------- CREATE POLES ---------- */
-function createPoles(){
-  poles=[];
-  for(let i=0;i<POLE_COUNT;i++){
-    poles.push({t:i/(POLE_COUNT-1)});
-  }
-}
-
-/* ---------- CREATE POWERLINES ---------- */
-function createPowerLines(){
-  powerLines=[];
-  const topY = h*0.75;
-  const bottomY = h*0.77;
-  powerLines = [
-    {x:vpX,y:vpY,ex:edgeOffset,ey:topY},
-    {x:vpX,y:vpY,ex:edgeOffset+40,ey:bottomY},
-    {x:vpX,y:vpY,ex:w-edgeOffset,ey:topY},
-    {x:vpX,y:vpY,ex:w-edgeOffset-40,ey:bottomY}
-  ];
-}
 
 /* ---------- DRAW SKY ---------- */
 function drawSky(){
@@ -80,22 +34,6 @@ function drawSky(){
   grad.addColorStop(1,"#f6b26b");
   ctx.fillStyle=grad;
   ctx.fillRect(0,0,w,h);
-}
-
-/* ---------- DRAW POLES ---------- */
-function drawPoles(){
-  ctx.fillStyle="saddlebrown";
-  for(let p of poles){
-    p.t += 0.003;
-    if(p.t>1) p.t=0;
-    const y = vpY + (h - vpY)*p.t;
-    const xLeft = vpX - (vpX - edgeOffset)*p.t;
-    const xRight = vpX + (w - vpX - edgeOffset)*p.t;
-    const poleHeight = 1 + 200*p.t;
-    const poleWidth = Math.max(1,1+10*p.t);
-    ctx.fillRect(xLeft - poleWidth/2,y - poleHeight,poleWidth,poleHeight);
-    ctx.fillRect(xRight - poleWidth/2,y - poleHeight,poleWidth,poleHeight);
-  }
 }
 
 /* ---------- DRAW ROAD ---------- */
@@ -118,77 +56,60 @@ function drawRoad(){
   ctx.setLineDash([]);
 }
 
+/* ---------- DRAW POLES ---------- */
+function drawPoles(){
+  ctx.fillStyle="saddlebrown";
+  const POLE_COUNT = 6;
+  const edgeOffset = 50;
+  for(let i=0;i<POLE_COUNT;i++){
+    let t = i/(POLE_COUNT-1);
+    const y = vpY + (h - vpY) * t;
+    const xLeft = vpX - (vpX - edgeOffset) * t;
+    const xRight = vpX + (w - vpX - edgeOffset) * t;
+    const poleHeight = 200*t + 10;
+    const poleWidth = 10*t + 2;
+    ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+    ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+  }
+}
+
 /* ---------- DRAW POWERLINES ---------- */
 function drawPowerLines(){
   ctx.strokeStyle="black";
   ctx.lineWidth=2;
-  for(let line of powerLines){
-    ctx.beginPath();
-    ctx.moveTo(line.x,line.y);
-    ctx.lineTo(line.ex,line.ey);
-    ctx.stroke();
-  }
-}
-
-/* ---------- DRAW BIRDS WITH MURMURATION ---------- */
-function drawBirds(){
-  const neighborDist = 50;
-  const cohesion = 0.01;
-  const alignment = 0.05;
-  const separation = 0.05;
-
-  for(let b of birds){
-    let cx=0,cy=0,avx=0,avy=0,count=0;
-
-    for(let other of birds){
-      const dx=other.x-b.x;
-      const dy=other.y-b.y;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist>0 && dist<neighborDist){
-        cx+=other.x;
-        cy+=other.y;
-        avx+=other.vx;
-        avy+=other.vy;
-        count++;
-        b.vx -= dx*separation/dist;
-        b.vy -= dy*separation/dist;
-      }
-    }
-
-    if(count>0){
-      cx/=count; cy/=count; avx/=count; avy/=count;
-      b.vx += (cx-b.x)*cohesion + (avx-b.vx)*alignment;
-      b.vy += (cy-b.y)*cohesion + (avy-b.vy)*alignment;
-    }
-
-    b.x += b.vx;
-    b.y += b.vy;
-
-    if(b.x<0) b.vx=Math.abs(b.vx);
-    if(b.x>w) b.vx=-Math.abs(b.vx);
-    if(b.y<0) b.vy=Math.abs(b.vy);
-    if(b.y>h) b.vy=-Math.abs(b.vy);
-
-    b.wing+=0.2;
-    const a=Math.atan2(b.vy,b.vx);
-    const flap=Math.sin(b.wing)*3;
-
-    ctx.save();
-    ctx.translate(b.x,b.y);
-    ctx.rotate(a);
-    ctx.strokeStyle="white";
-    ctx.lineWidth=2;
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.lineTo(-8,-4-flap*0.5);
-    ctx.moveTo(0,0);
-    ctx.lineTo(-8,4+flap*0.5);
-    ctx.stroke();
-    ctx.restore();
-  }
+  const topY = h*0.75;
+  const bottomY = h*0.77;
+  const edgeOffset = 50;
+  // left
+  ctx.beginPath();
+  ctx.moveTo(vpX,vpY);
+  ctx.lineTo(edgeOffset,topY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(vpX,vpY);
+  ctx.lineTo(edgeOffset+40,bottomY);
+  ctx.stroke();
+  // right
+  ctx.beginPath();
+  ctx.moveTo(vpX,vpY);
+  ctx.lineTo(w-edgeOffset,topY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(vpX,vpY);
+  ctx.lineTo(w-edgeOffset-40,bottomY);
+  ctx.stroke();
 }
 
 /* ---------- ANIMATE ---------- */
 function animate(){
   drawSky();
   drawPoles();
+  drawRoad();
+  drawPowerLines();
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
