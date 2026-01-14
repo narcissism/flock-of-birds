@@ -35,10 +35,10 @@ resize();
 function createBirds(){
     birds = [];
     for(let i=0;i<BIRD_COUNT;i++){
-        const angle = Math.random() * Math.PI/6 - Math.PI/12; // small vertical angle
+        const angle = Math.random() * Math.PI/6 - Math.PI/12; // slight vertical angle
         const speed = 1 + Math.random()*2;
         birds.push({
-            x: Math.random() * 50,           // start very left
+            x: Math.random() * 50,           // very left
             y: Math.random() * vpY*0.8,      // vertical spread
             vx: Math.cos(angle)*speed,       // mostly to right
             vy: Math.sin(angle)*speed,       // slight vertical
@@ -48,7 +48,7 @@ function createBirds(){
         });
     }
 }
-createBirds(); // only call once
+createBirds(); // only once on load
 
 /* ---------- POLES ---------- */
 function createPoles(){
@@ -104,4 +104,104 @@ function drawRoad(){
     ctx.strokeStyle="yellow";
     ctx.lineWidth=4;
     ctx.beginPath();
-    ctx.moveTo(vp
+    ctx.moveTo(vpX,vpY);
+    ctx.lineTo(w/2,h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+/* ---------- POLES ---------- */
+function drawPoles(){
+    ctx.fillStyle="saddlebrown";
+    for(let p of poles){
+        p.t += 0.002;
+        if(p.t>1) p.t=0;
+
+        const y = vpY + (h - vpY)*p.t;
+        const xLeft = vpX - (vpX - edgeOffset)*p.t;
+        const xRight = vpX + (w - vpX - edgeOffset)*p.t;
+        const poleHeight = 200*p.t + 10;
+        const poleWidth = 10*p.t + 2;
+
+        ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+    }
+}
+
+/* ---------- POWERLINES ---------- */
+function drawPowerLines(){
+    ctx.strokeStyle="black";
+    ctx.lineWidth=2;
+    const topY = h*0.75;
+    const bottomY = h*0.77;
+
+    ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(edgeOffset,topY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(edgeOffset+40,bottomY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset,topY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset-40,bottomY); ctx.stroke();
+}
+
+/* ---------- FLOCKING ---------- */
+function flock(b){
+  let ax=0, ay=0, cx=0, cy=0, sx=0, sy=0, n=0;
+  for(const o of birds){
+    if(o===b) continue;
+    const dx=o.x-b.x, dy=o.y-b.y;
+    const d=Math.hypot(dx,dy);
+    if(d>0 && d<90){
+      ax+=o.vx; ay+=o.vy; cx+=o.x; cy+=o.y;
+      if(d<22){ sx-=dx/d; sy-=dy/d; }
+      n++;
+    }
+  }
+  if(n){
+    ax/=n; ay/=n; cx=cx/n-b.x; cy=cy/n-b.y;
+    b.ax+=ax*0.03; b.ay+=ay*0.03; b.ax+=cx*0.002; b.ay+=cy*0.002;
+    b.ax+=sx*0.06; b.ay+=sy*0.06;
+  }
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPoles();
+    drawPowerLines();
+
+    for(const b of birds) flock(b);
+
+    for(const b of birds){
+        b.vx+=b.ax; b.vy+=b.ay;
+        let speed=Math.hypot(b.vx,b.vy);
+        if(speed>3){ b.vx=b.vx/speed*3; b.vy=b.vy/speed*3; }
+        b.x+=b.vx; b.y+=b.vy;
+
+        const m=220; 
+        // removed left edge push
+        if(b.x>w-m) b.vx-=0.18;
+        if(b.y<m) b.vy+=0.18;
+        if(b.y>vpY*0.8) b.vy-=0.18;
+
+        b.ax=b.ay=0; b.wing+=speed*0.25;
+
+        const a=Math.atan2(b.vy,b.vx);
+        const flap=Math.sin(b.wing)*3;
+        ctx.save();
+        ctx.translate(b.x,b.y);
+        ctx.rotate(a);
+        ctx.strokeStyle="rgba(255,255,255,0.9)";
+        ctx.lineWidth=1.1;
+        ctx.beginPath();
+        ctx.moveTo(0,0); ctx.lineTo(-7,-3-flap*0.3);
+        ctx.moveTo(0,0); ctx.lineTo(-7,3+flap*0.3);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
