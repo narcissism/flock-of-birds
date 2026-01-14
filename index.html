@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Powerlines to Tallest Pole</title>
+<title>Murmuration Road Powerlines Stable</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -66,11 +66,10 @@ function drawRoad(){
 }
 
 /* ---------- POLES ---------- */
-function drawPoles(){
+function drawPolesAndGetTops(){
     ctx.fillStyle = "saddlebrown";
-
-    let leftTallest = null;
-    let rightTallest = null;
+    let leftTop = null;
+    let rightTop = null;
 
     for(let i=0;i<poles.length;i++){
         let p = poles[i];
@@ -83,26 +82,25 @@ function drawPoles(){
         const poleHeight = 1 + 200*p.t;
         const poleWidth = Math.max(1, 1 + 10*p.t);
 
-        const topYLeft = y - poleHeight;
-        const topYRight = y - poleHeight;
+        const topLeftY = Math.max(0, y - poleHeight);
+        const topRightY = Math.max(0, y - poleHeight);
 
-        ctx.fillRect(xLeft - poleWidth/2, topYLeft, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, topYRight, poleWidth, poleHeight);
+        ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
+        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
 
-        // record tallest visible pole tops
-        if(!leftTallest || topYLeft < leftTallest.y) leftTallest = {x: xLeft, y: topYLeft};
-        if(!rightTallest || topYRight < rightTallest.y) rightTallest = {x: xRight, y: topYRight};
+        if(!leftTop || topLeftY < leftTop.y) leftTop = {x:xLeft, y:topLeftY};
+        if(!rightTop || topRightY < rightTop.y) rightTop = {x:xRight, y:topRightY};
     }
 
-    drawPowerLines(leftTallest, rightTallest);
+    return {leftTop, rightTop};
 }
 
-/* ---------- POWERLINES TO TALLEST POLE ---------- */
+/* ---------- POWERLINES ---------- */
 function drawPowerLines(leftTop, rightTop){
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-
     if(leftTop){
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+
         ctx.beginPath();
         ctx.moveTo(vpX, vpY);
         ctx.lineTo(leftTop.x - 10, leftTop.y); // left line 1
@@ -115,6 +113,9 @@ function drawPowerLines(leftTop, rightTop){
     }
 
     if(rightTop){
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+
         ctx.beginPath();
         ctx.moveTo(vpX, vpY);
         ctx.lineTo(rightTop.x + 10, rightTop.y); // right line 1
@@ -131,5 +132,12 @@ function drawPowerLines(leftTop, rightTop){
 function animate(){
     drawSky();
     drawRoad();
-    drawPoles();
-    requestA
+    const {leftTop, rightTop} = drawPolesAndGetTops();
+    drawPowerLines(leftTop, rightTop);
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
