@@ -29,12 +29,15 @@ function resetCanvas() {
     vpX = w/2;
     vpY = h*2/3;
 
-    // Precompute static endpoints for 2 lines per side, slightly higher than before
+    // End 1/4 from the bottom
+    const endY = h * 0.75;
+
+    // Precompute static endpoints for 2 lines per side
     powerLineEnds = [
-        {x: edgeOffset, y: h - 30},          // left line 1
-        {x: edgeOffset + 40, y: h - 30},     // left line 2
-        {x: w - edgeOffset, y: h - 30},      // right line 1
-        {x: w - edgeOffset - 40, y: h - 30}  // right line 2
+        {x: edgeOffset, y: endY},          // left line 1
+        {x: edgeOffset + 40, y: endY},     // left line 2
+        {x: w - edgeOffset, y: endY},      // right line 1
+        {x: w - edgeOffset - 40, y: endY}  // right line 2
     ];
 
     poles = [];
@@ -49,19 +52,4 @@ resetCanvas();
 function drawSky(){
     const grad = ctx.createLinearGradient(0,0,0,h);
     grad.addColorStop(0, "orange");
-    grad.addColorStop(1, "darkblue");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,w,h);
-}
-
-/* ---------- ROAD ---------- */
-function drawRoad(){
-    ctx.fillStyle = "#333";
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.fill();
-
-    dashOffset += 1
+    g
