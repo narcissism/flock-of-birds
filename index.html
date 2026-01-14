@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Murmuration</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      background: black;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Murmuration</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: black;
+}
+canvas {
+  display: block;
+}
+</style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
@@ -25,6 +25,7 @@ const ctx = canvas.getContext("2d");
 
 let w = canvas.width = window.innerWidth;
 let h = canvas.height = window.innerHeight;
+
 window.addEventListener("resize", () => {
   w = canvas.width = window.innerWidth;
   h = canvas.height = window.innerHeight;
@@ -46,21 +47,26 @@ for (let i = 0; i < COUNT; i++) {
   });
 }
 
-/* ---------- SAFE DAY-NIGHT SKY ---------- */
-function drawSky(t) {
-  // t in ms
-  const cycle = Math.sin(t * 0.00002) * 0.5 + 0.5; // 0→1→0 sine
-  // define top/bottom colors for day (sky blue) → sunset → night
-  const top = [
-    Math.floor(135 * cycle + 10*(1-cycle)),   // R
-    Math.floor(206 * cycle + 15*(1-cycle)),   // G
-    Math.floor(250 * cycle + 40*(1-cycle))    // B
-  ];
-  const bottom = [
-    Math.floor(255 * cycle + 120*(1-cycle)),
-    Math.floor(255 * cycle + 180*(1-cycle)),
-    Math.floor(255 * cycle + 240*(1-cycle))
-  ];
+/* ---------- SAFE DAY-NIGHT CYCLE ---------- */
+const skyStops = [
+  { top:[255,100,0], bottom:[255,180,80] }, // Sunset
+  { top:[10,10,35], bottom:[20,20,50] },    // Night
+  { top:[200,120,180], bottom:[255,200,180] }, // Sunrise
+  { top:[135,206,250], bottom:[255,255,255] }  // Day
+];
+
+function lerp(a,b,f){return a+(b-a)*f;}
+function drawSky(t){
+  const cycleDuration = 40000; // 40s full loop
+  let totalStops = skyStops.length;
+  let loop = (t % cycleDuration)/cycleDuration * totalStops;
+  let idx = Math.floor(loop);
+  let nextIdx = (idx+1)%totalStops;
+  let f = loop - idx;
+
+  const top = skyStops[idx].top.map((v,i)=>Math.floor(lerp(v, skyStops[nextIdx].top[i], f)));
+  const bottom = skyStops[idx].bottom.map((v,i)=>Math.floor(lerp(v, skyStops[nextIdx].bottom[i], f)));
+
   const g = ctx.createLinearGradient(0,0,0,h);
   g.addColorStop(0, `rgb(${top[0]},${top[1]},${top[2]})`);
   g.addColorStop(1, `rgb(${bottom[0]},${bottom[1]},${bottom[2]})`);
@@ -69,9 +75,9 @@ function drawSky(t) {
 }
 
 /* ---------- FLOCKING ---------- */
-function flock(b) {
+function flock(b){
   let ax=0, ay=0, cx=0, cy=0, sx=0, sy=0, n=0;
-  for (const o of birds) {
+  for(const o of birds){
     if(o===b) continue;
     const dx=o.x-b.x, dy=o.y-b.y;
     const d=Math.hypot(dx,dy);
@@ -91,14 +97,15 @@ function flock(b) {
 /* ---------- ANIMATE ---------- */
 function animate(t){
   drawSky(t);
+
   for(const b of birds) flock(b);
+
   for(const b of birds){
     b.vx+=b.ax; b.vy+=b.ay;
     let speed=Math.hypot(b.vx,b.vy);
     if(speed>3){ b.vx=b.vx/speed*3; b.vy=b.vy/speed*3; }
     b.x+=b.vx; b.y+=b.vy;
 
-    // edge avoidance
     const m=220;
     if(b.x<m) b.vx+=0.18;
     if(b.x>w-m) b.vx-=0.18;
@@ -107,7 +114,6 @@ function animate(t){
 
     b.ax=b.ay=0; b.wing+=speed*0.25;
 
-    // draw bird
     const a=Math.atan2(b.vy,b.vx);
     const flap=Math.sin(b.wing)*3;
     ctx.save();
@@ -117,14 +123,4 @@ function animate(t){
     ctx.lineWidth=1.1;
     ctx.beginPath();
     ctx.moveTo(0,0); ctx.lineTo(-7,-3-flap*0.3);
-    ctx.moveTo(0,0); ctx.lineTo(-7,3+flap*0.3);
-    ctx.stroke();
-    ctx.restore();
-  }
-  requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+    ctx.moveTo(0,0); ctx.lineTo(-7,3+fl
