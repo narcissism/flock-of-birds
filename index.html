@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Stable Powerlines</title>
+<title>Murmuration Road Powerlines to Tallest Pole</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -20,10 +20,6 @@ const poleCount = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
 
-// Precomputed static endpoints for 2 lines per side
-let leftEnds = [];
-let rightEnds = [];
-
 function resetCanvas() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
@@ -34,16 +30,6 @@ function resetCanvas() {
     for(let i=0;i<poleCount;i++){
         poles.push({t: i/(poleCount-1)});
     }
-
-    // Fully static powerline endpoints
-    leftEnds = [
-        {x: edgeOffset, y: h},
-        {x: edgeOffset + 40, y: h}
-    ];
-    rightEnds = [
-        {x: w - edgeOffset, y: h},
-        {x: w - edgeOffset - 40, y: h}
-    ];
 }
 window.addEventListener("resize", resetCanvas);
 resetCanvas();
@@ -54,4 +40,96 @@ function drawSky(){
     grad.addColorStop(0, "orange");
     grad.addColorStop(1, "darkblue");
     ctx.fillStyle = grad;
-    ctx.fillRect(0,0,w
+    ctx.fillRect(0,0,w,h);
+}
+
+/* ---------- ROAD ---------- */
+function drawRoad(){
+    ctx.fillStyle = "#333";
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+
+    dashOffset += 1.5;
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([30,30]);
+    ctx.lineDashOffset = -dashOffset;
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w/2, h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+/* ---------- POLES ---------- */
+function drawPoles(){
+    ctx.fillStyle = "saddlebrown";
+
+    let leftTallest = null;
+    let rightTallest = null;
+
+    for(let i=0;i<poles.length;i++){
+        let p = poles[i];
+        p.t += 0.003;
+        if(p.t > 1) p.t = 0;
+
+        const y = vpY + (h - vpY) * p.t;
+        const xLeft = vpX - (vpX - edgeOffset) * p.t;
+        const xRight = vpX + (w - vpX - edgeOffset) * p.t;
+        const poleHeight = 1 + 200*p.t;
+        const poleWidth = Math.max(1, 1 + 10*p.t);
+
+        const topYLeft = y - poleHeight;
+        const topYRight = y - poleHeight;
+
+        ctx.fillRect(xLeft - poleWidth/2, topYLeft, poleWidth, poleHeight);
+        ctx.fillRect(xRight - poleWidth/2, topYRight, poleWidth, poleHeight);
+
+        // record tallest visible pole tops
+        if(!leftTallest || topYLeft < leftTallest.y) leftTallest = {x: xLeft, y: topYLeft};
+        if(!rightTallest || topYRight < rightTallest.y) rightTallest = {x: xRight, y: topYRight};
+    }
+
+    drawPowerLines(leftTallest, rightTallest);
+}
+
+/* ---------- POWERLINES TO TALLEST POLE ---------- */
+function drawPowerLines(leftTop, rightTop){
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+
+    if(leftTop){
+        ctx.beginPath();
+        ctx.moveTo(vpX, vpY);
+        ctx.lineTo(leftTop.x - 10, leftTop.y); // left line 1
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(vpX, vpY);
+        ctx.lineTo(leftTop.x - 30, leftTop.y); // left line 2
+        ctx.stroke();
+    }
+
+    if(rightTop){
+        ctx.beginPath();
+        ctx.moveTo(vpX, vpY);
+        ctx.lineTo(rightTop.x + 10, rightTop.y); // right line 1
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(vpX, vpY);
+        ctx.lineTo(rightTop.x + 30, rightTop.y); // right line 2
+        ctx.stroke();
+    }
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPoles();
+    requestA
