@@ -41,10 +41,58 @@ function drawSky() {
 }
 
 /* --------------------
+   DRAW ROAD
+-------------------- */
+function drawRoad() {
+  // Draw road triangle
+  ctx.fillStyle = "#333";
+  ctx.beginPath();
+  const vpX = w / 2;
+  const vpY = h * 0.55; // vanishing point
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Dashed line
+  ctx.setLineDash([30, 30]);
+  ctx.strokeStyle = "yellow";
+
+  // Single dashed line from vanishing point to bottom center
+  const lineX1 = vpX;
+  const lineY1 = vpY;
+  const lineX2 = w / 2;
+  const lineY2 = h;
+
+  const segments = 100; // divide into small sections just for lineWidth growth
+  for (let i = 0; i < segments; i++) {
+    const t1 = i / segments;
+    const t2 = (i + 1) / segments;
+
+    const xStart = lineX1 * (1 - t1) + lineX2 * t1;
+    const yStart = lineY1 * (1 - t1) + lineY2 * t1;
+    const xEnd = lineX1 * (1 - t2) + lineX2 * t2;
+    const yEnd = lineY1 * (1 - t2) + lineY2 * t2;
+
+    // Line width grows from 4 at top to 8 at bottom
+    ctx.lineWidth = 4 + 4 * t2;
+
+    ctx.beginPath();
+    ctx.moveTo(xStart, yStart);
+    ctx.lineTo(xEnd, yEnd);
+    ctx.stroke();
+  }
+
+  ctx.setLineDash([]); // reset dash
+}
+
+/* --------------------
    UPDATE & DRAW
 -------------------- */
 function animate() {
   drawSky();
+  drawRoad(); // road below birds
 
   for (const b of birds) {
     b.x += b.vx;
@@ -65,16 +113,4 @@ function animate() {
     ctx.lineWidth = 1;
 
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-6, -3 - flap * 0.3);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-6, 3 + flap * 0.3);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  requestAnimationFrame(animate);
-}
-
-animate();
+    ctx.moveTo(0, 0
