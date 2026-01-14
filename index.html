@@ -20,15 +20,153 @@
 <canvas id="canvas"></canvas>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+let w, h;
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+/* --------------------
+   SUNSET SKY
+-------------------- */
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#0b1026");
+  g.addColorStop(0.4, "#3a1c5a");
+  g.addColorStop(0.7, "#b24a3a");
+  g.addColorStop(1, "#f6b26b");
+
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+}
+
+/* --------------------
+   BIRDS
+-------------------- */
+const birds = [];
+const COUNT = 350;
+
+for (let i = 0; i < COUNT; i++) {
+  const a = Math.random() * Math.PI * 2;
+  birds.push({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    vx: Math.cos(a),
+    vy: Math.sin(a),
+    ax: 0,
+    ay: 0,
+    wing: Math.random() * Math.PI * 2
+  });
+}
+
+function limit(v, max) {
+  const m = Math.hypot(v.x, v.y);
+  if (m > max) {
+    v.x = (v.x / m) * max;
+    v.y = (v.y / m) * max;
   }
-  resize();
-  window.addEventListener("resize", resize);
+}
+
+/* --------------------
+   FLOCKING
+-------------------- */
+function flock(b, others) {
+  let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, n = 0;
+
+  for (const o of others) {
+    if (o === b) continue;
+    const dx = o.x - b.x;
+    const dy = o.y - b.y;
+    const d = Math.hypot(dx, dy);
+
+    if (d > 0 && d < 80) {
+      ax += o.vx;
+      ay += o.vy;
+      cx += o.x;
+      cy += o.y;
+      if (d < 20) {
+        sx -= dx / d;
+        sy -= dy / d;
+      }
+      n++;
+    }
+  }
+
+  if (n > 0) {
+    ax /= n; ay /= n;
+    cx = cx / n - b.x;
+    cy = cy / n - b.y;
+
+    b.ax += ax * 0.02;
+    b.ay += ay * 0.02;
+    b.ax += cx * 0.001;
+    b.ay += cy * 0.001;
+    b.ax += sx * 0.05;
+    b.ay += sy * 0.05;
+  }
+}
+
+/* --------------------
+   ANIMATION LOOP
+-------------------- */
+function animate() {
+  drawSky();
+
+  for (const b of birds) flock(b, birds);
+
+  for (const b of birds) {
+    b.vx += b.ax;
+    b.vy += b.ay;
+
+    const speed = Math.hypot(b.vx, b.vy);
+    if (speed > 3) {
+      b.vx = (b.vx / speed) * 3;
+      b.vy = (b.vy / speed) * 3;
+    }
+
+    b.x += b.vx;
+    b.y += b.vy;
+
+    // soft edge anticipation
+    const m = 200;
+    if (b.x < m) b.vx += 0.15;
+    if (b.x > w - m) b.vx -= 0.15;
+    if (b.y < m) b.vy += 0.15;
+    if (b.y > h - m) b.vy -= 0.15;
+
+    b.ax = b.ay = 0;
+    b.wing += speed * 0.25;
+
+    const a = Math.atan2(b.vy, b.vx);
+    const flap = Math.sin(b.wing) * 3;
+
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(a);
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.lineWidth = 1.1;
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-7, -3 - flap * 0.3);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-7, 3 + flap * 0.3);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
 
   // DRAW SOMETHING OBVIOUS
   const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
