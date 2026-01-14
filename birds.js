@@ -1,3 +1,5 @@
+throw new Error("THIS IS THE CURRENT JS FILE");
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
