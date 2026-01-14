@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Base Stable</title>
+<title>Murmuration Road with Powerlines</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -68,6 +68,9 @@ function drawRoad(){
 /* ---------- POLES ---------- */
 function drawPoles(){
     ctx.fillStyle = "saddlebrown";
+    const leftPoles = [];
+    const rightPoles = [];
+
     for(let i=0;i<poles.length;i++){
         let p = poles[i];
         p.t += 0.003;
@@ -79,39 +82,6 @@ function drawPoles(){
         const poleHeight = 1 + 200*p.t;
         const poleWidth = Math.max(1, 1 + 10*p.t);
 
+        // draw poles
         ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-    }
-}
-
-/* ---------- STATIC POWER LINES (SAFE) ---------- */
-function drawStaticPowerLines(){
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-
-    // draw left line
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(0, h);  // static end point
-    ctx.stroke();
-
-    // draw right line
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w, h);  // static end point
-    ctx.stroke();
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawRoad();
-    drawPoles();
-    drawStaticPowerLines();
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleH
