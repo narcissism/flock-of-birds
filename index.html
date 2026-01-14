@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Safe Minimal</title>
+<title>Murmuration Road Powerlines</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -57,4 +57,10 @@ function drawRoad(){
     dashOffset += 1.5;
     ctx.strokeStyle = "yellow";
     ctx.lineWidth = 4;
-    ctx.setLineDash([30]()
+    ctx.setLineDash([30,30]);
+    ctx.lineDashOffset = -dashOffset;
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w/2, h);
+    ctx.stroke();
+    ctx.setL
