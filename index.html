@@ -28,17 +28,20 @@ function resetCanvas() {
     h = canvas.height = window.innerHeight;
 
     vpX = w/2;
-    vpY = h*2/3;
+    vpY = h*0.55; // make sure vanishing point is above powerline end
 
-    // Precompute powerline endpoints (1/4 from bottom)
-    const endY = h * 0.75;
+    // End point: 1/4 from bottom
+    const endY = h*0.75;
+
+    // Precompute static endpoints
     powerLines = [
-        {x: vpX, y: vpY, ex: edgeOffset, ey: endY},          
-        {x: vpX, y: vpY, ex: edgeOffset + 40, ey: endY},     
-        {x: vpX, y: vpY, ex: w - edgeOffset, ey: endY},      
-        {x: vpX, y: vpY, ex: w - edgeOffset - 40, ey: endY}  
+        {x: vpX, y: vpY, ex: edgeOffset, ey: endY},
+        {x: vpX, y: vpY, ex: edgeOffset + 40, ey: endY},
+        {x: vpX, y: vpY, ex: w - edgeOffset, ey: endY},
+        {x: vpX, y: vpY, ex: w - edgeOffset - 40, ey: endY}
     ];
 
+    // Initialize poles
     poles = [];
     for(let i=0;i<poleCount;i++){
         poles.push({t: i/(poleCount-1)});
@@ -54,6 +57,27 @@ function drawSky(){
     grad.addColorStop(1, "darkblue");
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,w,h);
+}
+
+/* ---------- POLES ---------- */
+function drawPoles(){
+    ctx.fillStyle = "saddlebrown";
+    for(let p of poles){
+        p.t += 0.003;
+        if(p.t > 1) p.t = 0;
+
+        const y = vpY + (h - vpY) * p.t;
+        const xLeft = vpX - (vpX - edgeOffset) * p.t;
+        const xRight = vpX + (w - vpX - edgeOffset) * p.t;
+        const poleHeight = 1 + 200*p.t;
+        const poleWidth = Math.max(1, 1 + 10*p.t);
+
+        const topLeftY = Math.max(0, y - poleHeight);
+        const topRightY = Math.max(0, y - poleHeight);
+
+        ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
+        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
+    }
 }
 
 /* ---------- ROAD ---------- */
@@ -90,33 +114,12 @@ function drawPowerLines(){
     }
 }
 
-/* ---------- POLES ---------- */
-function drawPoles(){
-    ctx.fillStyle = "saddlebrown";
-    for(let p of poles){
-        p.t += 0.003;
-        if(p.t > 1) p.t = 0;
-
-        const y = vpY + (h - vpY) * p.t;
-        const xLeft = vpX - (vpX - edgeOffset) * p.t;
-        const xRight = vpX + (w - vpX - edgeOffset) * p.t;
-        const poleHeight = 1 + 200*p.t;
-        const poleWidth = Math.max(1, 1 + 10*p.t);
-
-        const topLeftY = Math.max(0, y - poleHeight);
-        const topRightY = Math.max(0, y - poleHeight);
-
-        ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
-    }
-}
-
 /* ---------- ANIMATE ---------- */
 function animate(){
     drawSky();
-    drawRoad();
-    drawPowerLines(); // draw BEFORE poles
-    drawPoles();      // poles behind the lines
+    drawPoles();       // poles behind
+    drawRoad();        // road above poles
+    drawPowerLines();  // lines on top
     requestAnimationFrame(animate);
 }
 
