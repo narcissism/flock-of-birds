@@ -14,24 +14,25 @@ canvas { display:block; }
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-// Variables that depend on canvas size
-let w, h, horizonY, poles;
+let w, h, vpX, vpY, poles;
 const poleCount = 12;
-const roadWidth = 100;
-
+const roadBaseWidth = 300; // half-width at bottom
 function resetCanvas() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
-    horizonY = h * 0.3;
+    vpX = w/2;
+    vpY = h*2/3;
 
-    // Initialize poles evenly between horizonY and bottom
+    // Initialize poles
     poles = [];
-    for(let i=0; i<poleCount; i++){
-        poles.push({y: horizonY + i*(h - horizonY)/poleCount});
+    for(let i=0;i<poleCount;i++){
+        // t is from 0 (vanishing point) to 1 (bottom)
+        const t = i/(poleCount-1);
+        poles.push({t: t});
     }
 }
 window.addEventListener("resize", resetCanvas);
-resetCanvas(); // initial setup
+resetCanvas();
 
 /* ---------- SKY ---------- */
 const skyStages = [
@@ -43,7 +44,7 @@ const skyStages = [
 ];
 
 function clamp(n){ return Math.min(255, Math.max(0, Math.round(n))); }
-function lerp(a,b,f){ return clamp(a + (b-a)*f); }
+function lerp(a,b,f){ return clamp(a+(b-a)*f); }
 
 function drawSky(t){
     const cycle = 120000;
@@ -66,54 +67,66 @@ function drawSky(t){
     ctx.fillRect(0,0,w,h);
 }
 
-/* ---------- ROAD & POLES ---------- */
-function drawRoadAndPoles(){
-    // Draw road
+/* ---------- ROAD ---------- */
+function drawRoad(){
+    // road edges
     ctx.fillStyle = "#333";
     ctx.beginPath();
-    ctx.moveTo(w/2 - roadWidth, h);
-    ctx.lineTo(w/2 + roadWidth, h);
-    ctx.lineTo(w/2 + roadWidth, horizonY);
-    ctx.lineTo(w/2 - roadWidth, horizonY);
+    ctx.moveTo(vpX, vpY); // vanishing point
+    ctx.lineTo(w/2 + roadBaseWidth, h);
+    ctx.lineTo(w/2 - roadBaseWidth, h);
     ctx.closePath();
     ctx.fill();
 
-    // Draw poles and power lines
-    ctx.strokeStyle = "#555";
-    ctx.lineWidth = 2;
-    for(const p of poles){
-        const scale = 1 - (p.y - horizonY)/(h - horizonY) * 0.8;
-        const y = p.y;
-        const leftX = w/2 - 120*scale;
-        const rightX = w/2 + 120*scale;
-        const poleH = 150*scale;
-
-        // only draw if coordinates are finite
-        if(isFinite(y) && isFinite(leftX) && isFinite(rightX) && isFinite(poleH)){
-            ctx.beginPath();
-            ctx.moveTo(leftX, y); ctx.lineTo(leftX, y - poleH);
-            ctx.moveTo(rightX, y); ctx.lineTo(rightX, y - poleH);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(leftX, y - poleH*0.7); ctx.lineTo(rightX, y - poleH*0.7);
-            ctx.stroke();
-        }
-    }
+    // dashed center line
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([20,20]);
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w/2, h);
+    ctx.stroke();
+    ctx.setLineDash([]); // reset dash
 }
 
-function updatePoles(){
-    for(const p of poles){
-        p.y += 2;
-        if(p.y > h) p.y = horizonY;
+/* ---------- POLES ---------- */
+function drawPoles(){
+    for(let p of poles){
+        // move t downwards to simulate motion
+        p.t += 0.005; // speed
+        if(p.t > 1) p.t = 0;
+
+        // position along the road sides
+        const y = vpY + (h - vpY)*p.t;
+        const leftX = vpX - roadBaseWidth*p.t*1.2;
+        const rightX = vpX + roadBaseWidth*p.t*1.2;
+        const poleHeight = 100 + 150*p.t; // taller near bottom
+        ctx.strokeStyle = "saddlebrown";
+        ctx.lineWidth = 4*p.t + 1;
+
+        // left pole
+        ctx.beginPath();
+        ctx.moveTo(leftX, y);
+        ctx.lineTo(leftX, y - poleHeight);
+        ctx.stroke();
+        // right pole
+        ctx.beginPath();
+        ctx.moveTo(rightX, y);
+        ctx.lineTo(rightX, y - poleHeight);
+        ctx.stroke();
+        // power line
+        ctx.beginPath();
+        ctx.moveTo(leftX, y - poleHeight*0.7);
+        ctx.lineTo(rightX, y - poleHeight*0.7);
+        ctx.stroke();
     }
 }
 
 /* ---------- ANIMATE ---------- */
 function animate(t){
     drawSky(t);
-    updatePoles();
-    drawRoadAndPoles();
+    drawRoad();
+    drawPoles();
     requestAnimationFrame(animate);
 }
 
