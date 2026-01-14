@@ -20,8 +20,8 @@ const poleCount = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
 
-// Fixed base powerline end Y (just above the road)
-let powerLineY;
+// Powerline end coordinates (precomputed)
+let powerLineEnds = [];
 
 function resetCanvas() {
     w = canvas.width = window.innerWidth;
@@ -29,8 +29,13 @@ function resetCanvas() {
     vpX = w/2;
     vpY = h*2/3;
 
-    // base Y slightly above road
-    powerLineY = vpY + (h - vpY) - 10;
+    // Precompute static endpoints for 2 lines per side, slightly higher than before
+    powerLineEnds = [
+        {x: edgeOffset, y: h - 30},          // left line 1
+        {x: edgeOffset + 40, y: h - 30},     // left line 2
+        {x: w - edgeOffset, y: h - 30},      // right line 1
+        {x: w - edgeOffset - 40, y: h - 30}  // right line 2
+    ];
 
     poles = [];
     for(let i=0;i<poleCount;i++){
@@ -59,81 +64,4 @@ function drawRoad(){
     ctx.closePath();
     ctx.fill();
 
-    dashOffset += 1.5;
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = 4;
-    ctx.setLineDash([30,30]);
-    ctx.lineDashOffset = -dashOffset;
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w/2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-}
-
-/* ---------- POLES ---------- */
-function drawPoles(){
-    ctx.fillStyle = "saddlebrown";
-
-    for(let i=0;i<poles.length;i++){
-        let p = poles[i];
-        p.t += 0.003;
-        if(p.t > 1) p.t = 0;
-
-        const y = vpY + (h - vpY) * p.t;
-        const xLeft = vpX - (vpX - edgeOffset) * p.t;
-        const xRight = vpX + (w - vpX - edgeOffset) * p.t;
-        const poleHeight = 1 + 200*p.t;
-        const poleWidth = Math.max(1, 1 + 10*p.t);
-
-        const topLeftY = Math.max(0, y - poleHeight);
-        const topRightY = Math.max(0, y - poleHeight);
-
-        ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
-    }
-}
-
-/* ---------- STATIC POWERLINES ABOVE ROAD ---------- */
-function drawPowerLines(){
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-
-    const offset = 20; // raise the end by ~20 pixels (1 inch)
-
-    // left side
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(edgeOffset, powerLineY - offset);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(edgeOffset + 40, powerLineY - offset);
-    ctx.stroke();
-
-    // right side
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w - edgeOffset, powerLineY - offset);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w - edgeOffset - 40, powerLineY - offset);
-    ctx.stroke();
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawRoad();
-    drawPoles();
-    drawPowerLines(); // draw last so lines stay visible
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+    dashOffset += 1
