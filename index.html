@@ -20,7 +20,7 @@ const poleCount = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
 
-// Fixed powerline end Y (just above the road)
+// Fixed base powerline end Y (just above the road)
 let powerLineY;
 
 function resetCanvas() {
@@ -29,8 +29,8 @@ function resetCanvas() {
     vpX = w/2;
     vpY = h*2/3;
 
-    // end about 1.25 inches (~20 pixels) above the road
-    powerLineY = vpY + (h - vpY) - 30; // adjust from previous 10 → 30
+    // base Y slightly above road
+    powerLineY = vpY + (h - vpY) - 10;
 
     poles = [];
     for(let i=0;i<poleCount;i++){
@@ -99,19 +99,41 @@ function drawPowerLines(){
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
 
+    const offset = 20; // raise the end by ~20 pixels (1 inch)
+
     // left side
     ctx.beginPath();
     ctx.moveTo(vpX, vpY);
-    ctx.lineTo(edgeOffset, powerLineY);
+    ctx.lineTo(edgeOffset, powerLineY - offset);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(vpX, vpY);
-    ctx.lineTo(edgeOffset + 40, powerLineY);
+    ctx.lineTo(edgeOffset + 40, powerLineY - offset);
     ctx.stroke();
 
     // right side
     ctx.beginPath();
     ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w - edgeOffset, powerLineY);
+    ctx.lineTo(w - edgeOffset, powerLineY - offset);
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(w - edgeOffset - 40, powerLineY - offset);
+    ctx.stroke();
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPoles();
+    drawPowerLines(); // draw last so lines stay visible
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
