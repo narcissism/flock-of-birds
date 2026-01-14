@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Murmuration Test</title>
+  <title>Canvas Test</title>
   <style>
     html, body {
       margin: 0;
@@ -16,7 +16,28 @@
   </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
-  <script src="birds.js"></script>
-</body>
-</html>
+
+<canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  // DRAW SOMETHING OBVIOUS
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, "red");
+  g.addColorStop(1, "yellow");
+
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "48px sans-serif";
+  ctx.fillText("CANVAS IS WORKING",
