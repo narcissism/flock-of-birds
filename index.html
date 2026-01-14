@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Safe</title>
+<title>Murmuration Road Refined</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -17,11 +17,13 @@ const ctx = canvas.getContext("2d");
 let w, h, vpX, vpY, poles;
 const roadBottomHalfWidth = 500;
 const poleCount = 6;
+
 function resetCanvas() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
     vpX = w/2;
     vpY = h*2/3;
+
     poles = [];
     for(let i=0;i<poleCount;i++){
         poles.push({t: i/(poleCount-1)});
@@ -30,7 +32,7 @@ function resetCanvas() {
 window.addEventListener("resize", resetCanvas);
 resetCanvas();
 
-/* SKY */
+/* ---------- SKY ---------- */
 const skyStages = [
   {top:[255,100,0], bottom:[255,180,80]},
   {top:[20,30,70], bottom:[30,40,100]},
@@ -38,8 +40,10 @@ const skyStages = [
   {top:[200,120,180], bottom:[255,200,180]},
   {top:[135,206,250], bottom:[255,255,255]}
 ];
+
 function clamp(n){ return Math.min(255, Math.max(0, Math.round(n))); }
 function lerp(a,b,f){ return clamp(a+(b-a)*f); }
+
 function drawSky(t){
     const cycle = 120000;
     const total = skyStages.length;
@@ -61,19 +65,19 @@ function drawSky(t){
     ctx.fillRect(0,0,w,h);
 }
 
-/* ROAD */
+/* ---------- ROAD ---------- */
 let dashOffset = 0;
 function drawRoad(){
     ctx.fillStyle = "#333";
     ctx.beginPath();
     ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w/2 + roadBottomHalfWidth, h);
-    ctx.lineTo(w/2 - roadBottomHalfWidth, h);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
     ctx.closePath();
     ctx.fill();
 
-    // moving dashed center line
-    dashOffset += 6;
+    // slower dashed center line
+    dashOffset += 2; // slower
     ctx.strokeStyle = "yellow";
     ctx.lineWidth = 4;
     ctx.setLineDash([30,30]);
@@ -85,7 +89,7 @@ function drawRoad(){
     ctx.setLineDash([]);
 }
 
-/* POLES */
+/* ---------- POLES ---------- */
 function drawPoles(){
     let leftPoles = [], rightPoles = [];
     for(const p of poles){
@@ -93,63 +97,11 @@ function drawPoles(){
         if(p.t > 1) p.t = 0;
 
         const y = vpY + (h - vpY)*p.t;
-        const xOffset = roadBottomHalfWidth*p.t*1.2;
-        const poleHeight = 120 + 200*p.t;
-        const poleWidth = 6 + 14*p.t;
+        const leftX = vpX - roadBottomHalfWidth*p.t*1.5;  // extend farther
+        const rightX = vpX + roadBottomHalfWidth*p.t*1.5;
 
-        leftPoles.push({x: vpX - xOffset, y, poleHeight, poleWidth});
-        rightPoles.push({x: vpX + xOffset, y, poleHeight, poleWidth});
-    }
+        const poleHeight = 0 + 250*p.t; // grow from zero
+        const poleWidth = 0 + 20*p.t;
 
-    // Draw left poles
-    ctx.fillStyle = "saddlebrown";
-    ctx.strokeStyle = "saddlebrown";
-    for(let i=0;i<leftPoles.length;i++){
-        const p = leftPoles[i];
-        ctx.beginPath();
-        ctx.rect(p.x - p.poleWidth/2, p.y - p.poleHeight, p.poleWidth, p.poleHeight);
-        ctx.fill();
-
-        // connect to next visible pole if y > 0
-        if(i<leftPoles.length-1){
-            const next = leftPoles[i+1];
-            if(next.y > vpY+2){
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y - p.poleHeight*0.6);
-                ctx.quadraticCurveTo((p.x+next.x)/2, (p.y+next.y)/2 - 30, next.x, next.y - next.poleHeight*0.6);
-                ctx.stroke();
-            }
-        }
-    }
-
-    // Draw right poles
-    for(let i=0;i<rightPoles.length;i++){
-        const p = rightPoles[i];
-        ctx.beginPath();
-        ctx.rect(p.x - p.poleWidth/2, p.y - p.poleHeight, p.poleWidth, p.poleHeight);
-        ctx.fill();
-
-        if(i<rightPoles.length-1){
-            const next = rightPoles[i+1];
-            if(next.y > vpY+2){
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y - p.poleHeight*0.6);
-                ctx.quadraticCurveTo((p.x+next.x)/2, (p.y+next.y)/2 - 30, next.x, next.y - next.poleHeight*0.6);
-                ctx.stroke();
-            }
-        }
-    }
-}
-
-/* ANIMATE */
-function animate(t){
-    drawSky(t);
-    drawRoad();
-    drawPoles();
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+        leftPoles.push({x: leftX, y, poleHeight, poleWidth});
+        rightPoles.push({x: rightX, y, poleHeight, poleWidth});
