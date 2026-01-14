@@ -28,20 +28,21 @@ function resetCanvas() {
     h = canvas.height = window.innerHeight;
 
     vpX = w/2;
-    vpY = h*0.55; // make sure vanishing point is above powerline end
+    vpY = h*0.55; // vanishing point
 
-    // End point: 1/4 from bottom
-    const endY = h*0.75;
+    // End points: top line and bottom line (bottom slightly lower)
+    const endYTop = h*0.75;
+    const endYBottom = h*0.77; // slightly lower than top
 
-    // Precompute static endpoints
     powerLines = [
-        {x: vpX, y: vpY, ex: edgeOffset, ey: endY},
-        {x: vpX, y: vpY, ex: edgeOffset + 40, ey: endY},
-        {x: vpX, y: vpY, ex: w - edgeOffset, ey: endY},
-        {x: vpX, y: vpY, ex: w - edgeOffset - 40, ey: endY}
+        // left side
+        {x: vpX, y: vpY, ex: edgeOffset, ey: endYTop},
+        {x: vpX, y: vpY, ex: edgeOffset + 40, ey: endYBottom},
+        // right side
+        {x: vpX, y: vpY, ex: w - edgeOffset, ey: endYTop},
+        {x: vpX, y: vpY, ex: w - edgeOffset - 40, ey: endYBottom}
     ];
 
-    // Initialize poles
     poles = [];
     for(let i=0;i<poleCount;i++){
         poles.push({t: i/(poleCount-1)});
