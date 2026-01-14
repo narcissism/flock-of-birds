@@ -2,129 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Stable Powerlines</title>
+<title>Murmuration Road</title>
 <style>
-html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
-canvas { display:block; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background: black;
+  }
+  canvas {
+    display: block;
+  }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-let w, h, vpX, vpY;
-let poles = [];
-const poleCount = 6;
-const edgeOffset = 50;
-let dashOffset = 0;
-
-// Powerline coordinates
-let powerLines = [];
-
-function resetCanvas() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-
-    vpX = w/2;
-    vpY = h*0.55; // vanishing point
-
-    // End points: top line and bottom line (bottom slightly lower)
-    const endYTop = h*0.75;
-    const endYBottom = h*0.77; // slightly lower than top
-
-    powerLines = [
-        // left side
-        {x: vpX, y: vpY, ex: edgeOffset, ey: endYTop},
-        {x: vpX, y: vpY, ex: edgeOffset + 40, ey: endYBottom},
-        // right side
-        {x: vpX, y: vpY, ex: w - edgeOffset, ey: endYTop},
-        {x: vpX, y: vpY, ex: w - edgeOffset - 40, ey: endYBottom}
-    ];
-
-    poles = [];
-    for(let i=0;i<poleCount;i++){
-        poles.push({t: i/(poleCount-1)});
-    }
-}
-window.addEventListener("resize", resetCanvas);
-resetCanvas();
-
-/* ---------- SKY ---------- */
-function drawSky(){
-    const grad = ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0, "orange");
-    grad.addColorStop(1, "darkblue");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,w,h);
-}
-
-/* ---------- POLES ---------- */
-function drawPoles(){
-    ctx.fillStyle = "saddlebrown";
-    for(let p of poles){
-        p.t += 0.003;
-        if(p.t > 1) p.t = 0;
-
-        const y = vpY + (h - vpY) * p.t;
-        const xLeft = vpX - (vpX - edgeOffset) * p.t;
-        const xRight = vpX + (w - vpX - edgeOffset) * p.t;
-        const poleHeight = 1 + 200*p.t;
-        const poleWidth = Math.max(1, 1 + 10*p.t);
-
-        const topLeftY = Math.max(0, y - poleHeight);
-        const topRightY = Math.max(0, y - poleHeight);
-
-        ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
-    }
-}
-
-/* ---------- ROAD ---------- */
-function drawRoad(){
-    ctx.fillStyle = "#333";
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.fill();
-
-    dashOffset += 1.5;
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = 4;
-    ctx.setLineDash([30,30]);
-    ctx.lineDashOffset = -dashOffset;
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w/2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-}
-
-/* ---------- STATIC POWERLINES ---------- */
-function drawPowerLines(){
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    for(let line of powerLines){
-        ctx.beginPath();
-        ctx.moveTo(line.x, line.y);
-        ctx.lineTo(line.ex, line.ey);
-        ctx.stroke();
-    }
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawPoles();       // poles behind
-    drawRoad();        // road above poles
-    drawPowerLines();  // lines on top
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
+<script src="script.js"></script>
 </body>
 </html>
