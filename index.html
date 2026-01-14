@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Stable Base</title>
+<title>Murmuration Road Full Poles</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -17,7 +17,7 @@ const ctx = canvas.getContext("2d");
 let w, h, vpX, vpY;
 let poles = [];
 const poleCount = 6;
-const roadBottomHalfWidth = 500;
+const roadBottomHalfWidth = 600; // wider so poles reach edges
 let dashOffset = 0;
 
 function resetCanvas() {
@@ -26,76 +26,4 @@ function resetCanvas() {
     vpX = w/2;
     vpY = h*2/3;
 
-    poles = [];
-    for(let i=0;i<poleCount;i++){
-        poles.push({t: i/(poleCount-1)});
-    }
-}
-window.addEventListener("resize", resetCanvas);
-resetCanvas();
-
-/* ---------- SKY ---------- */
-function drawSky(){
-    const grad = ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0, "orange");
-    grad.addColorStop(1, "darkblue");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,w,h);
-}
-
-/* ---------- ROAD ---------- */
-function drawRoad(){
-    ctx.fillStyle = "#333";
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    ctx.fill();
-
-    dashOffset += 1.5;
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = 4;
-    ctx.setLineDash([30,30]);
-    ctx.lineDashOffset = -dashOffset;
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w/2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-}
-
-/* ---------- POLES ---------- */
-function drawPoles(){
-    ctx.fillStyle = "saddlebrown";
-
-    for(let i=0;i<poles.length;i++){
-        let p = poles[i];
-        p.t += 0.003;
-        if(p.t > 1) p.t = 0;
-
-        const y = vpY + (h - vpY) * p.t;
-        const xLeft = vpX - roadBottomHalfWidth * p.t * 1.2;
-        const xRight = vpX + roadBottomHalfWidth * p.t * 1.2;
-        const poleHeight = 1 + 200*p.t;
-        const poleWidth = 1 + 10*p.t;
-
-        // draw left pole
-        ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        // draw right pole
-        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-    }
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawRoad();
-    drawPoles();
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+    poles =
