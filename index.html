@@ -7,7 +7,8 @@
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
+      width: 100%;
+      height: 100%;
       background: black;
     }
     canvas {
@@ -20,7 +21,38 @@
 <canvas id="canvas"></canvas>
 
 <script>
-/* =========================
-   CANVAS SETUP
-========================= */
-const
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  // FORCE SIZE — no resize logic yet
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // VISUAL PROOF
+  ctx.fillStyle = "purple";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "40px sans-serif";
+  ctx.fillText("MURMURATION BASELINE", 40, 80);
+
+  // DRAW ONE BIRD
+  ctx.save();
+  ctx.translate(200, 200);
+  ctx.rotate(0.3);
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-15, -6);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-15, 6);
+  ctx.stroke();
+  ctx.restore();
+
+  console.log("Baseline draw complete");
+</script>
+
+</body>
+</html>
