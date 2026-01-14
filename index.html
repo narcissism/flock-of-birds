@@ -37,17 +37,20 @@ resize();
 function createBirds(){
     birds = [];
     for(let i=0;i<BIRD_COUNT;i++){
-        const a = Math.random() * Math.PI * 2;
+        const angle = Math.random() * Math.PI/4 - Math.PI/8; // slightly up/down
+        const speed = 1 + Math.random()*2;
         birds.push({
-            x: Math.random()*w,
-            y: Math.random()*vpY*0.8,
-            vx: Math.cos(a),
-            vy: Math.sin(a),
+            x: Math.random() * w * 0.1, // start on left 10% of screen
+            y: Math.random() * vpY*0.8,
+            vx: Math.cos(angle)*speed,   // mostly to right
+            vy: Math.sin(angle)*speed,   // slight vertical variation
             ax:0,
             ay:0,
             wing: Math.random()*Math.PI*2
         });
     }
+}
+
 }
 
 /* ---------- POLES ---------- */
