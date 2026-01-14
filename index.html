@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Powerlines Stable</title>
+<title>Murmuration Road Stable Powerlines</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -20,11 +20,16 @@ const poleCount = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
 
+// Fixed powerline end Y (just above the road)
+let powerLineY;
+
 function resetCanvas() {
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
     vpX = w/2;
     vpY = h*2/3;
+
+    powerLineY = vpY + (h - vpY) - 10; // about an inch above bottom of road
 
     poles = [];
     for(let i=0;i<poleCount;i++){
@@ -66,10 +71,8 @@ function drawRoad(){
 }
 
 /* ---------- POLES ---------- */
-function drawPolesAndGetTops(){
+function drawPoles(){
     ctx.fillStyle = "saddlebrown";
-    let leftTop = null;
-    let rightTop = null;
 
     for(let i=0;i<poles.length;i++){
         let p = poles[i];
@@ -86,58 +89,3 @@ function drawPolesAndGetTops(){
         const topRightY = Math.max(0, y - poleHeight);
 
         ctx.fillRect(xLeft - poleWidth/2, topLeftY, poleWidth, poleHeight);
-        ctx.fillRect(xRight - poleWidth/2, topRightY, poleWidth, poleHeight);
-
-        if(!leftTop || topLeftY < leftTop.y) leftTop = {x:xLeft, y:topLeftY};
-        if(!rightTop || topRightY < rightTop.y) rightTop = {x:xRight, y:topRightY};
-    }
-
-    return {leftTop, rightTop};
-}
-
-/* ---------- POWERLINES ---------- */
-function drawPowerLines(leftTop, rightTop){
-    if(leftTop){
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 2;
-
-        ctx.beginPath();
-        ctx.moveTo(vpX, vpY);
-        ctx.lineTo(leftTop.x - 10, leftTop.y); // left line 1
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(vpX, vpY);
-        ctx.lineTo(leftTop.x - 30, leftTop.y); // left line 2
-        ctx.stroke();
-    }
-
-    if(rightTop){
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 2;
-
-        ctx.beginPath();
-        ctx.moveTo(vpX, vpY);
-        ctx.lineTo(rightTop.x + 10, rightTop.y); // right line 1
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(vpX, vpY);
-        ctx.lineTo(rightTop.x + 30, rightTop.y); // right line 2
-        ctx.stroke();
-    }
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawRoad();
-    const {leftTop, rightTop} = drawPolesAndGetTops();
-    drawPowerLines(leftTop, rightTop);
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
