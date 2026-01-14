@@ -34,7 +34,7 @@ function resetCanvas() {
 window.addEventListener("resize", resetCanvas);
 resetCanvas();
 
-/* SKY */
+/* ---------- SKY ---------- */
 function drawSky(t){
     const grad = ctx.createLinearGradient(0,0,0,h);
     grad.addColorStop(0, "orange");
@@ -43,7 +43,7 @@ function drawSky(t){
     ctx.fillRect(0,0,w,h);
 }
 
-/* ROAD */
+/* ---------- ROAD ---------- */
 function drawRoad(){
     ctx.fillStyle = "#333";
     ctx.beginPath();
@@ -53,75 +53,8 @@ function drawRoad(){
     ctx.closePath();
     ctx.fill();
 
-    // dashed line slower
+    // slower dashed center line
     dashOffset += 1.5;
     ctx.strokeStyle = "yellow";
     ctx.lineWidth = 4;
-    ctx.setLineDash([30,30]);
-    ctx.lineDashOffset = -dashOffset;
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w/2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-}
-
-/* POLES */
-function drawPoles(){
-    ctx.fillStyle = "saddlebrown";
-    ctx.strokeStyle = "saddlebrown";
-    for(let i=0;i<poles.length;i++){
-        let p = poles[i];
-        p.t += 0.003;
-        if(p.t > 1) p.t = 0;
-
-        const y = vpY + (h - vpY) * p.t;
-        const xLeft = vpX - roadBottomHalfWidth * p.t * 1.2;
-        const xRight = vpX + roadBottomHalfWidth * p.t * 1.2;
-        const poleHeight = 1 + 200*p.t; // minimal start
-        const poleWidth = 1 + 10*p.t;
-
-        // left pole
-        ctx.beginPath();
-        ctx.rect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        ctx.fill();
-
-        // right pole
-        ctx.beginPath();
-        ctx.rect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        ctx.fill();
-
-        // safe lines (connect to next if t>0.05)
-        if(i < poles.length -1){
-            let next = poles[i+1];
-            if(p.t>0.05 && next.t>0.05){
-                const nextY = vpY + (h - vpY) * next.t;
-                const nextXLeft = vpX - roadBottomHalfWidth * next.t * 1.2;
-                const nextXRight = vpX + roadBottomHalfWidth * next.t * 1.2;
-
-                ctx.beginPath();
-                ctx.moveTo(xLeft, y - poleHeight*0.6);
-                ctx.lineTo(nextXLeft, nextY - (1 + 200*next.t)*0.6);
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.moveTo(xRight, y - poleHeight*0.6);
-                ctx.lineTo(nextXRight, nextY - (1 + 200*next.t)*0.6);
-                ctx.stroke();
-            }
-        }
-    }
-}
-
-/* ANIMATE */
-function animate(t){
-    drawSky(t);
-    drawRoad();
-    drawPoles();
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
+    ctx.setLineDash([30]()
