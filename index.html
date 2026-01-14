@@ -29,7 +29,8 @@ function resetCanvas() {
     vpX = w/2;
     vpY = h*2/3;
 
-    powerLineY = vpY + (h - vpY) - 10; // about an inch above bottom of road
+    // end about 1.25 inches (~20 pixels) above the road
+    powerLineY = vpY + (h - vpY) - 30; // adjust from previous 10 → 30
 
     poles = [];
     for(let i=0;i<poleCount;i++){
@@ -114,23 +115,3 @@ function drawPowerLines(){
     ctx.moveTo(vpX, vpY);
     ctx.lineTo(w - edgeOffset, powerLineY);
     ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(vpX, vpY);
-    ctx.lineTo(w - edgeOffset - 40, powerLineY);
-    ctx.stroke();
-}
-
-/* ---------- ANIMATE ---------- */
-function animate(){
-    drawSky();
-    drawRoad();
-    drawPoles();
-    drawPowerLines(); // **draw last to stay visible**
-    requestAnimationFrame(animate);
-}
-
-requestAnimationFrame(animate);
-</script>
-</body>
-</html>
