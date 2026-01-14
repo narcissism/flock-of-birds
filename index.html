@@ -15,13 +15,12 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let w,h,vpX,vpY;
-let birds = [];
-const BIRD_COUNT = 350;
-let poles = [];
+const BIRD_COUNT = 340;
 const POLE_COUNT = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
-let skyTime = 0;
+let birds = [];
+let poles = [];
 
 function resize() {
     w = canvas.width = window.innerWidth;
@@ -34,11 +33,11 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* ---------- CREATE BIRDS ---------- */
+/* ---------- BIRDS ---------- */
 function createBirds(){
     birds = [];
     for(let i=0;i<BIRD_COUNT;i++){
-        const a = Math.random()*Math.PI*2;
+        const a = Math.random() * Math.PI * 2;
         birds.push({
             x: Math.random()*w,
             y: Math.random()*vpY*0.8,
@@ -51,7 +50,7 @@ function createBirds(){
     }
 }
 
-/* ---------- CREATE POLES ---------- */
+/* ---------- POLES ---------- */
 function createPoles(){
     poles = [];
     for(let i=0;i<POLE_COUNT;i++){
@@ -60,42 +59,31 @@ function createPoles(){
 }
 
 /* ---------- SKY ---------- */
+const skyStops = [
+  { top:[255,100,0], bottom:[255,180,80] }, // Sunset
+  { top:[10,10,35], bottom:[20,20,50] },    // Night
+  { top:[200,120,180], bottom:[255,200,180] }, // Sunrise
+  { top:[135,206,250], bottom:[255,255,255] }  // Day
+];
+
+function lerp(a,b,f){return a+(b-a)*f;}
+let startTime = performance.now();
 function drawSky(){
-    skyTime += 0.0005;
-    if(skyTime>1) skyTime=0;
+    const t = performance.now() - startTime;
+    const cycleDuration = 40000; // 40s loop
+    let totalStops = skyStops.length;
+    let loop = (t % cycleDuration)/cycleDuration * totalStops;
+    let idx = Math.floor(loop);
+    let nextIdx = (idx+1)%totalStops;
+    let f = loop - idx;
 
-    const colors = [
-        {t:0, top:"#c95a3a", mid:"#5a246d", bottom:"#0b1026"},
-        {t:0.25, top:"#050a1f", mid:"#0b1026", bottom:"#1a1a3a"},
-        {t:0.5, top:"#f6b26b", mid:"#c95a3a", bottom:"#5a246d"},
-        {t:0.75, top:"#87ceeb", mid:"#5ac3d1", bottom:"#c95a3a"},
-        {t:1, top:"#c95a3a", mid:"#5a246d", bottom:"#0b1026"}
-    ];
+    const top = skyStops[idx].top.map((v,i)=>Math.floor(lerp(v, skyStops[nextIdx].top[i], f)));
+    const bottom = skyStops[idx].bottom.map((v,i)=>Math.floor(lerp(v, skyStops[nextIdx].bottom[i], f)));
 
-    let i = 0;
-    while(i<colors.length-1 && skyTime>colors[i+1].t) i++;
-    const t0 = colors[i].t;
-    const t1 = colors[i+1].t;
-    const f = (t1-t0===0)?0:(skyTime-t0)/(t1-t0);
-
-    function lerpColor(c0,c1,f){
-        const n0=parseInt(c0.slice(1),16);
-        const n1=parseInt(c1.slice(1),16);
-        const r = ((n0>>16)&0xFF)*(1-f) + ((n1>>16)&0xFF)*f;
-        const g = ((n0>>8)&0xFF)*(1-f) + ((n1>>8)&0xFF)*f;
-        const b = (n0&0xFF)*(1-f) + (n1&0xFF)*f;
-        return `rgb(${r|0},${g|0},${b|0})`;
-    }
-
-    const top = lerpColor(colors[i].top, colors[i+1].top, f);
-    const mid = lerpColor(colors[i].mid, colors[i+1].mid, f);
-    const bottom = lerpColor(colors[i].bottom, colors[i+1].bottom, f);
-
-    const grad = ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0, top);
-    grad.addColorStop(0.5, mid);
-    grad.addColorStop(1, bottom);
-    ctx.fillStyle = grad;
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0, `rgb(${top[0]},${top[1]},${top[2]})`);
+    g.addColorStop(1, `rgb(${bottom[0]},${bottom[1]},${bottom[2]})`);
+    ctx.fillStyle = g;
     ctx.fillRect(0,0,w,h);
 }
 
@@ -139,7 +127,7 @@ function drawPoles(){
     }
 }
 
-/* ---------- STATIC POWERLINES ---------- */
+/* ---------- POWERLINES ---------- */
 function drawPowerLines(){
     ctx.strokeStyle="black";
     ctx.lineWidth=2;
@@ -152,92 +140,64 @@ function drawPowerLines(){
     ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset-40,bottomY); ctx.stroke();
 }
 
-/* ---------- FLOCKING LOGIC ---------- */
-function flock(b, others) {
-  let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, n = 0;
-
-  for (const o of others) {
-    if (o === b) continue;
-    const dx = o.x - b.x;
-    const dy = o.y - b.y;
-    const d = Math.hypot(dx, dy);
-
-    if (d > 0 && d < 80) {
-      ax += o.vx;
-      ay += o.vy;
-      cx += o.x;
-      cy += o.y;
-      if (d < 20) {
-        sx -= dx / d;
-        sy -= dy / d;
-      }
+/* ---------- FLOCKING ---------- */
+function flock(b){
+  let ax=0, ay=0, cx=0, cy=0, sx=0, sy=0, n=0;
+  for(const o of birds){
+    if(o===b) continue;
+    const dx=o.x-b.x, dy=o.y-b.y;
+    const d=Math.hypot(dx,dy);
+    if(d>0 && d<90){
+      ax+=o.vx; ay+=o.vy; cx+=o.x; cy+=o.y;
+      if(d<22){ sx-=dx/d; sy-=dy/d; }
       n++;
     }
   }
-
-  if (n > 0) {
-    ax /= n; ay /= n;
-    cx = cx / n - b.x;
-    cy = cy / n - b.y;
-
-    b.ax += ax * 0.02;
-    b.ay += ay * 0.02;
-    b.ax += cx * 0.001;
-    b.ay += cy * 0.001;
-    b.ax += sx * 0.05;
-    b.ay += sy * 0.05;
+  if(n){
+    ax/=n; ay/=n; cx=cx/n-b.x; cy=cy/n-b.y;
+    b.ax+=ax*0.03; b.ay+=ay*0.03; b.ax+=cx*0.002; b.ay+=cy*0.002;
+    b.ax+=sx*0.06; b.ay+=sy*0.06;
   }
 }
 
 /* ---------- ANIMATE ---------- */
-function animate() {
-  drawSky();
-  drawRoad();
-  drawPoles();
-  drawPowerLines();
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPoles();
+    drawPowerLines();
 
-  for (const b of birds) flock(b, birds);
+    for(const b of birds) flock(b);
 
-  for (const b of birds) {
-    b.vx += b.ax;
-    b.vy += b.ay;
+    for(const b of birds){
+        b.vx+=b.ax; b.vy+=b.ay;
+        let speed=Math.hypot(b.vx,b.vy);
+        if(speed>3){ b.vx=b.vx/speed*3; b.vy=b.vy/speed*3; }
+        b.x+=b.vx; b.y+=b.vy;
 
-    const speed = Math.hypot(b.vx, b.vy);
-    if (speed > 3) {
-      b.vx = (b.vx / speed) * 3;
-      b.vy = (b.vy / speed) * 3;
+        const m=220;
+        if(b.x<m) b.vx+=0.18;
+        if(b.x>w-m) b.vx-=0.18;
+        if(b.y<m) b.vy+=0.18;
+        if(b.y>vpY*0.8) b.vy-=0.18;
+
+        b.ax=b.ay=0; b.wing+=speed*0.25;
+
+        const a=Math.atan2(b.vy,b.vx);
+        const flap=Math.sin(b.wing)*3;
+        ctx.save();
+        ctx.translate(b.x,b.y);
+        ctx.rotate(a);
+        ctx.strokeStyle="rgba(255,255,255,0.9)";
+        ctx.lineWidth=1.1;
+        ctx.beginPath();
+        ctx.moveTo(0,0); ctx.lineTo(-7,-3-flap*0.3);
+        ctx.moveTo(0,0); ctx.lineTo(-7,3+flap*0.3);
+        ctx.stroke();
+        ctx.restore();
     }
 
-    b.x += b.vx;
-    b.y += b.vy;
-
-    const m = 200;
-    if (b.x < m) b.vx += 0.15;
-    if (b.x > w - m) b.vx -= 0.15;
-    if (b.y < m) b.vy += 0.15;
-    if (b.y > vpY*0.8) b.vy -= 0.15;
-
-    b.ax = b.ay = 0;
-    b.wing += speed*0.25;
-
-    const a = Math.atan2(b.vy, b.vx);
-    const flap = Math.sin(b.wing)*3;
-
-    ctx.save();
-    ctx.translate(b.x,b.y);
-    ctx.rotate(a);
-    ctx.strokeStyle="rgba(255,255,255,0.9)";
-    ctx.lineWidth=1.1;
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.lineTo(-7,-3-flap*0.3);
-    ctx.moveTo(0,0);
-    ctx.lineTo(-7,3+flap*0.3);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 }
 
 animate();
