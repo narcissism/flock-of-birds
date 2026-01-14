@@ -21,7 +21,7 @@ let poles = [];
 const POLE_COUNT = 6;
 const edgeOffset = 50;
 let dashOffset = 0;
-let time = 0; // for sky shift
+let time = 0; // 0→1 for sky cycle
 
 function resize(){
   w = canvas.width = window.innerWidth;
@@ -57,41 +57,42 @@ function createPoles(){
   }
 }
 
-/* ---------- DRAW SKY WITH TIME OF DAY ---------- */
+/* ---------- INTERPOLATE RGB COLORS ---------- */
+function lerpColorRGB(c0,c1,f){
+  return {
+    r: c0.r*(1-f)+c1.r*f,
+    g: c0.g*(1-f)+c1.g*f,
+    b: c0.b*(1-f)+c1.b*f
+  };
+}
+function rgbToString(c){ return `rgb(${c.r|0},${c.g|0},${c.b|0})`; }
+
+/* ---------- DRAW SKY ---------- */
 function drawSky(){
-  time += 0.0005; // adjust speed
+  time += 0.0005;
   if(time>1) time=0;
 
   const colors = [
-    {t:0, top:"#c95a3a", mid:"#5a246d", bottom:"#0b1026"}, // sunset
-    {t:0.25, top:"#050a1f", mid:"#0b1026", bottom:"#1a1a3a"}, // night
-    {t:0.5, top:"#f6b26b", mid:"#c95a3a", bottom:"#5a246d"}, // sunrise
-    {t:0.75, top:"#87ceeb", mid:"#5ac3d1", bottom:"#c95a3a"}, // day
-    {t:1, top:"#c95a3a", mid:"#5a246d", bottom:"#0b1026"} // sunset
+    {t:0, top:{r:201,g:90,b:58}, mid:{r:90,g:36,b:109}, bottom:{r:11,g:16,b:38}}, // sunset
+    {t:0.25, top:{r:5,g:10,b:31}, mid:{r:11,g:16,b:38}, bottom:{r:26,g:26,b:58}}, // night
+    {t:0.5, top:{r:246,g:178,b:107}, mid:{r:201,g:90,b:58}, bottom:{r:90,g:36,b:109}}, // sunrise
+    {t:0.75, top:{r:135,g:206,b:235}, mid:{r:90,g:195,b:209}, bottom:{r:201,g:90,b:58}}, // day
+    {t:1, top:{r:201,g:90,b:58}, mid:{r:90,g:36,b:109}, bottom:{r:11,g:16,b:38}} // back to sunset
   ];
 
   let i=0;
   while(i<colors.length-1 && time>colors[i+1].t) i++;
-  const t0 = colors[i].t, t1=colors[i+1].t;
-  const factor = (time - t0)/(t1-t0);
+  const t0=colors[i].t, t1=colors[i+1].t;
+  const f = (time - t0)/(t1-t0);
 
-  function lerpColor(c0,c1,f){
-    const n0 = parseInt(c0.slice(1),16);
-    const n1 = parseInt(c1.slice(1),16);
-    const r = ((n0>>16)&0xFF)*(1-f) + ((n1>>16)&0xFF)*f;
-    const g = ((n0>>8)&0xFF)*(1-f) + ((n1>>8)&0xFF)*f;
-    const b = (n0&0xFF)*(1-f) + (n1&0xFF)*f;
-    return `rgb(${r|0},${g|0},${b|0})`;
-  }
-
-  const top = lerpColor(colors[i].top,colors[i+1].top,factor);
-  const mid = lerpColor(colors[i].mid,colors[i+1].mid,factor);
-  const bottom = lerpColor(colors[i].bottom,colors[i+1].bottom,factor);
+  const top = lerpColorRGB(colors[i].top,colors[i+1].top,f);
+  const mid = lerpColorRGB(colors[i].mid,colors[i+1].mid,f);
+  const bottom = lerpColorRGB(colors[i].bottom,colors[i+1].bottom,f);
 
   const grad = ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,top);
-  grad.addColorStop(0.5,mid);
-  grad.addColorStop(1,bottom);
+  grad.addColorStop(0,rgbToString(top));
+  grad.addColorStop(0.5,rgbToString(mid));
+  grad.addColorStop(1,rgbToString(bottom));
   ctx.fillStyle=grad;
   ctx.fillRect(0,0,w,h);
 }
@@ -101,4 +102,13 @@ function drawPoles(){
   ctx.fillStyle="saddlebrown";
   for(let p of poles){
     p.t += 0.002;
-    if(p.t
+    if(p.t>1) p.t=0;
+
+    const y = vpY + (h - vpY)*p.t;
+    const xLeft = vpX - (vpX - edgeOffset)*p.t;
+    const xRight = vpX + (w - vpX - edgeOffset)*p.t;
+    const poleHeight = 200*p.t + 10;
+    const poleWidth = 10*p.t + 2;
+
+    ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+    ctx.fillRect(xRight - poleWidth/2,
