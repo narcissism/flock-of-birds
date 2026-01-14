@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road with Safe Powerlines</title>
+<title>Murmuration Road 2 Powerlines Each Side</title>
 <style>
 html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; background:black;}
 canvas { display:block; }
@@ -68,8 +68,8 @@ function drawRoad(){
 /* ---------- POLES ---------- */
 function drawPoles(){
     ctx.fillStyle = "saddlebrown";
-    const leftPoles = [];
-    const rightPoles = [];
+    let leftTop = null;
+    let rightTop = null;
 
     for(let i=0;i<poles.length;i++){
         let p = poles[i];
@@ -82,6 +82,49 @@ function drawPoles(){
         const poleHeight = 1 + 200*p.t;
         const poleWidth = Math.max(1, 1 + 10*p.t);
 
-        // draw poles
         ctx.fillRect(xLeft - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
-        ctx.fillRect(x
+        ctx.fillRect(xRight - poleWidth/2, y - poleHeight, poleWidth, poleHeight);
+
+        // record the topmost visible pole
+        if(y - poleHeight >= vpY + 5){
+            if(!leftTop) leftTop = {x: xLeft, y: y - poleHeight};
+            if(!rightTop) rightTop = {x: xRight, y: y - poleHeight};
+        }
+    }
+
+    drawSafePowerLines(leftTop, -10, -30);   // left side, two lines
+    drawSafePowerLines(rightTop, 10, 30);    // right side, two lines
+}
+
+/* ---------- SAFE POWERLINES ---------- */
+function drawSafePowerLines(top, offset1, offset2){
+    if(!top) return; // no visible pole yet
+
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+
+    // line 1
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(top.x + offset1, top.y);
+    ctx.stroke();
+
+    // line 2
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(top.x + offset2, top.y);
+    ctx.stroke();
+}
+
+/* ---------- ANIMATE ---------- */
+function animate(){
+    drawSky();
+    drawRoad();
+    drawPoles();
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
