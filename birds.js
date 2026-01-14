@@ -55,34 +55,23 @@ function drawRoad() {
   ctx.closePath();
   ctx.fill();
 
-  // Dashed line
+  // Dashed line (simple single line)
   ctx.setLineDash([30, 30]);
   ctx.strokeStyle = "yellow";
-
-  // Top half of the line
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(vpX + (w/2 - vpX)/2, vpY + (h - vpY)/2); // midpoint
+  ctx.lineTo(w/2, h);
   ctx.stroke();
-
-  // Bottom half of the line (twice as wide)
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.moveTo(vpX + (w/2 - vpX)/2, vpY + (h - vpY)/2);
-  ctx.lineTo(w/2, h); // bottom center
-  ctx.stroke();
-
-  ctx.setLineDash([]); // reset dash
+  ctx.setLineDash([]);
 }
-
 
 /* --------------------
    UPDATE & DRAW
 -------------------- */
 function animate() {
   drawSky();
-  drawRoad(); // road below birds
+  drawRoad(); // draw road below birds
 
   for (const b of birds) {
     b.x += b.vx;
@@ -103,4 +92,16 @@ function animate() {
     ctx.lineWidth = 1;
 
     ctx.beginPath();
-    ctx.moveTo(0, 0
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-6, -3 - flap * 0.3);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-6, 3 + flap * 0.3);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
