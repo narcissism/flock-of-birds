@@ -98,7 +98,7 @@ function drawPoles() {
 
 /* ---------- POWER LINES ---------- */
 function drawPowerLines() {
-  ctx.strokeStyle = "black";
+  ctx.strokeStyle = "red";
   ctx.lineWidth = 2;
 
   // use the furthest pole (closest to camera)
