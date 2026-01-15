@@ -140,14 +140,33 @@ function drawPoles(){
 function drawPowerLines(){
   ctx.strokeStyle = "red";
   ctx.lineWidth = 2;
-  const topY = h * 0.75;
-  const botY = h * 0.77;
 
-  ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(edgeOffset,topY); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(edgeOffset+40,botY); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset,topY); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(vpX,vpY); ctx.lineTo(w-edgeOffset-40,botY); ctx.stroke();
+  // use farthest pole as anchor
+  const p = poles[poles.length - 1];
+  const yBase = vpY + (h - vpY) * p.t;
+  const yTop = yBase * (1 - p.t);
+
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(edgeOffset, yTop);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(edgeOffset + 40, yTop + 14);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(w - edgeOffset, yTop);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(w - edgeOffset - 40, yTop + 14);
+  ctx.stroke();
 }
+
 
 /* ---------- ANIMATE ---------- */
 function animate(){
