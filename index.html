@@ -223,19 +223,20 @@ function drawBirds() {
   for (const b of birds) flock(b);
 
   for (const b of birds) {
-    // Organic swirl
-    const swirlStrength = 0.04;
-    const swirlAngle = Math.sin(b.wing * 0.8 + Math.random() * 0.5);
-    b.ax += Math.cos(swirlAngle) * swirlStrength;
-    b.ay += Math.sin(swirlAngle) * swirlStrength;
+    // Organic swirl: persistent per-bird angle
+    if (b.swirlOffset === undefined) b.swirlOffset = Math.random() * Math.PI * 2;
+    b.swirlOffset += 0.03; // smooth rotation over time
+    const swirlStrength = 0.03;
+    b.ax += Math.cos(b.swirlOffset) * swirlStrength;
+    b.ay += Math.sin(b.swirlOffset) * swirlStrength;
 
     // Apply acceleration + wind
     b.vx += b.ax + wx;
     b.vy += b.ay + wy;
 
-    // Limit speed (slower overall)
+    // Limit speed
     const speed = Math.hypot(b.vx, b.vy);
-    const maxSpeed = 1.8; // slower than before
+    const maxSpeed = 1.8;
     if (speed > maxSpeed) {
       b.vx = (b.vx / speed) * maxSpeed;
       b.vy = (b.vy / speed) * maxSpeed;
@@ -259,13 +260,13 @@ function drawBirds() {
 
     // Draw bird
     const angle = Math.atan2(b.vy, b.vx);
-    const flap = Math.sin(b.wing) * 4; // slightly larger wings
+    const flap = Math.sin(b.wing) * 4;
 
     ctx.save();
     ctx.translate(b.x, b.y);
     ctx.rotate(angle);
     ctx.strokeStyle = "rgba(255,255,255,0.95)";
-    ctx.lineWidth = 1.6; // larger birds
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(-9, -4 - flap * 0.4);
@@ -275,6 +276,7 @@ function drawBirds() {
     ctx.restore();
   }
 }
+
 
 
 /* ---------- ANIMATE ---------- */
