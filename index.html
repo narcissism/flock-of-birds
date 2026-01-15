@@ -121,7 +121,8 @@ function drawPoles(){
     const y = vpY + (h - vpY) * p.t;
     const xL = vpX - (vpX - edgeOffset) * p.t;
     const xR = vpX + (w - vpX - edgeOffset) * p.t;
-    const height = 200 * p.t + 10;
+
+    const height = (h - vpY) * p.t + 20;
     const width = 10 * p.t + 2;
 
     ctx.fillRect(xL - width/2, y - height, width, height);
@@ -129,9 +130,10 @@ function drawPoles(){
   }
 }
 
+
 /* ---------- POWER LINES ---------- */
 function drawPowerLines(){
-  ctx.strokeStyle = "black";
+  ctx.strokeStyle = "red";
   ctx.lineWidth = 2;
   const topY = h * 0.75;
   const botY = h * 0.77;
