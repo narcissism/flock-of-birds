@@ -30,6 +30,13 @@ const edgeOffset = 50;
 let dashOffset = 0;
 let skyTime = 0;
 
+/* ---------- CURSOR ---------- */
+let cursor = { x: -1000, y: -1000 }; // start off-screen
+window.addEventListener("mousemove", e => {
+  cursor.x = e.clientX;
+  cursor.y = e.clientY;
+});
+
 /* ---------- BIRDS ---------- */
 const birds = [];
 const BIRD_COUNT = 420;
@@ -187,13 +194,26 @@ function flock(b){
   if(n){
     ax/=n; ay/=n;
     cx=cx/n-b.x; cy=cy/n-b.y;
-    b.ax+=ax*0.03; b.ay+=ay*0.03;
-    b.ax+=cx*0.002; b.ay+=cy*0.002;
-    b.ax+=sx*0.06; b.ay+=sy*0.06;
+    // stronger cohesion/alignment to swarm when groups meet
+    b.ax+=ax*0.04; 
+    b.ay+=ay*0.04;
+    b.ax+=cx*0.003; 
+    b.ay+=cy*0.003;
+    b.ax+=sx*0.07; 
+    b.ay+=sy*0.07;
+  }
+
+  // repel from cursor
+  const dx = cursor.x - b.x;
+  const dy = cursor.y - b.y;
+  const dist = Math.hypot(dx,dy);
+  if(dist < 100){
+    b.ax -= (dx / dist) * (0.3 * (100 - dist)/100);
+    b.ay -= (dy / dist) * (0.3 * (100 - dist)/100);
   }
 }
 
-/* ---------- DRAW BIRDS (TOPMOST, LARGER) ---------- */
+/* ---------- DRAW BIRDS (TOP LAYER) ---------- */
 function drawBirds(){
   for(const b of birds) flock(b);
 
@@ -202,11 +222,11 @@ function drawBirds(){
     b.vy += b.ay;
 
     const s=Math.hypot(b.vx,b.vy);
-    if(s>3){ b.vx=b.vx/s*3; b.vy=b.vy/s*3; }
+    if(s>2.0){ b.vx=b.vx/s*2.0; b.vy=b.vy/s*2.0; } // slower
 
     b.x += b.vx; b.y += b.vy;
 
-    // Soft edges containment
+    // soft edge containment
     const margin = 60;
     const turn = 0.12;
     if(b.x < margin) b.vx += turn;
@@ -224,12 +244,12 @@ function drawBirds(){
     ctx.translate(b.x,b.y);
     ctx.rotate(a);
     ctx.strokeStyle = "rgba(255,255,255,0.95)";
-    ctx.lineWidth = 1.6; // slightly thicker
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(0,0);
     ctx.lineTo(-9,-4-flap*0.4);
     ctx.moveTo(0,0);
-    ctx.lineTo(-9, 4+flap*0.4);
+    ctx.lineTo(-9,4+flap*0.4);
     ctx.stroke();
     ctx.restore();
   }
@@ -241,7 +261,7 @@ function animate(){
   drawPoles();
   drawRoad();
   drawPowerLines();
-  drawBirds(); // birds on top
+  drawBirds(); // topmost layer
   requestAnimationFrame(animate);
 }
 
