@@ -132,7 +132,7 @@ function drawRoad(){
   ctx.setLineDash([]);
 }
 
-/* ---------- POLES (RESTORED VERSION) ---------- */
+/* ---------- POLES ---------- */
 function drawPoles(){
   ctx.fillStyle = "saddlebrown";
 
@@ -157,7 +157,7 @@ function drawPowerLines(){
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
 
-  const yEnd = h * (1/6); // fixed 1/6 from top
+  const yEnd = h * (2/6); // fixed 2/6 from top
 
   // LEFT
   ctx.beginPath(); ctx.moveTo(vpX, vpY); ctx.lineTo(0, yEnd); ctx.stroke();
