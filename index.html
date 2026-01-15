@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Murmuration Road Scene</title>
+<title>Murmuration</title>
 <style>
 html, body {
   margin:0;
@@ -114,19 +114,24 @@ function drawRoad(){
 /* ---------- POLES ---------- */
 function drawPoles(){
   ctx.fillStyle = "saddlebrown";
+
   for(let p of poles){
     p.t += 0.002;
     if(p.t > 1) p.t = 0;
 
-    const y = vpY + (h - vpY) * p.t;
+    // depth position
+    const yBase = vpY + (h - vpY) * p.t;
+
     const xL = vpX - (vpX - edgeOffset) * p.t;
     const xR = vpX + (w - vpX - edgeOffset) * p.t;
 
-    const height = (h - vpY) * p.t + 20;
-    const width = 10 * p.t + 2;
+    // pole top interpolates to top of frame
+    const yTop = yBase * (1 - p.t);
 
-    ctx.fillRect(xL - width/2, y - height, width, height);
-    ctx.fillRect(xR - width/2, y - height, width, height);
+    const width = 2 + 10 * p.t;
+
+    ctx.fillRect(xL - width/2, yTop, width, yBase - yTop);
+    ctx.fillRect(xR - width/2, yTop, width, yBase - yTop);
   }
 }
 
