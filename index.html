@@ -215,11 +215,6 @@ function flock(b){
   
 /* ---------- DRAW BIRDS (TOP LAYER) ---------- */
 function drawBirds(){
-
-  // small wind drift
-  windAngle += (Math.random() - 0.5) * 0.002;
-  const wx = Math.cos(windAngle) * 0.02;
-  const wy = Math.sin(windAngle) * 0.015;
   
   for(const b of birds) flock(b);
 
