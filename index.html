@@ -239,6 +239,11 @@ function drawBirds(){
     b.vx += b.ax + wx;
     b.vy += b.ay + wy;
 
+    // small wind drift
+  windAngle += (Math.random() - 0.5) * 0.002;
+  const wx = Math.cos(windAngle) * 0.02;
+  const wy = Math.sin(windAngle) * 0.015;
+
     // soft edge containment
     const margin = 60;
     const turn = 0.12;
