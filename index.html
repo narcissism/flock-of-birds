@@ -132,7 +132,7 @@ function drawRoad(){
   ctx.setLineDash([]);
 }
 
-/* ---------- POLES ---------- */
+/* ---------- POLES (RESTORED VERSION) ---------- */
 function drawPoles(){
   ctx.fillStyle = "saddlebrown";
 
@@ -144,20 +144,20 @@ function drawPoles(){
     const xL = vpX - (vpX - edgeOffset) * p.t;
     const xR = vpX + (w - vpX - edgeOffset) * p.t;
 
-    const yTop = 0; // stretch to top
-    const width = 2 + 10 * p.t;
+    const height = 200 * p.t + 10;
+    const width = 10 * p.t + 2;
 
-    ctx.fillRect(xL - width/2, yTop, width, yBase - yTop);
-    ctx.fillRect(xR - width/2, yTop, width, yBase - yTop);
+    ctx.fillRect(xL - width/2, yBase - height, width, height);
+    ctx.fillRect(xR - width/2, yBase - height, width, height);
   }
 }
 
 /* ---------- POWER LINES ---------- */
 function drawPowerLines(){
-  ctx.strokeStyle = "red";
+  ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
 
-  const yEnd = h * (1/6); // 1/6 down from top
+  const yEnd = h * (1/6); // fixed 1/6 from top
 
   // LEFT
   ctx.beginPath(); ctx.moveTo(vpX, vpY); ctx.lineTo(0, yEnd); ctx.stroke();
@@ -179,7 +179,7 @@ function flock(b){
     if(d>0 && d<90){
       ax+=o.vx; ay+=o.vy;
       cx+=o.x; cy+=o.y;
-      if(d<22){ sx-=dx/d; sy-=dy/d; }
+      if(d<25){ sx-=dx/d; sy-=dy/d; }
       n++;
     }
   }
@@ -193,7 +193,7 @@ function flock(b){
   }
 }
 
-/* ---------- DRAW BIRDS ---------- */
+/* ---------- DRAW BIRDS (TOPMOST, LARGER) ---------- */
 function drawBirds(){
   for(const b of birds) flock(b);
 
@@ -202,11 +202,11 @@ function drawBirds(){
     b.vy += b.ay;
 
     const s=Math.hypot(b.vx,b.vy);
-    if(s>2.8){ b.vx=b.vx/s*2.8; b.vy=b.vy/s*2.8; }
+    if(s>3){ b.vx=b.vx/s*3; b.vy=b.vy/s*3; }
 
     b.x += b.vx; b.y += b.vy;
 
-    // SOFT EDGE CONTAINMENT
+    // Soft edges containment
     const margin = 60;
     const turn = 0.12;
     if(b.x < margin) b.vx += turn;
@@ -218,18 +218,18 @@ function drawBirds(){
     b.wing += s * 0.25;
 
     const a = Math.atan2(b.vy, b.vx);
-    const flap = Math.sin(b.wing) * 3;
+    const flap = Math.sin(b.wing) * 4; // slightly larger
 
     ctx.save();
-    ctx.translate(b.x, b.y);
+    ctx.translate(b.x,b.y);
     ctx.rotate(a);
-    ctx.strokeStyle = "rgba(255,255,255,0.9)";
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 1.6; // slightly thicker
     ctx.beginPath();
     ctx.moveTo(0,0);
-    ctx.lineTo(-7,-3-flap*0.3);
+    ctx.lineTo(-9,-4-flap*0.4);
     ctx.moveTo(0,0);
-    ctx.lineTo(-7, 3+flap*0.3);
+    ctx.lineTo(-9, 4+flap*0.4);
     ctx.stroke();
     ctx.restore();
   }
@@ -238,10 +238,10 @@ function drawBirds(){
 /* ---------- ANIMATE ---------- */
 function animate(){
   drawSky();
-  drawBirds();
   drawPoles();
   drawRoad();
   drawPowerLines();
+  drawBirds(); // birds on top
   requestAnimationFrame(animate);
 }
 
