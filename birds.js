@@ -68,13 +68,6 @@ function drawRoad() {
 }
 
 /* ---------- POLES ---------- */
-const poles = [];
-const POLE_COUNT = 6;
-
-for (let i = 0; i < POLE_COUNT; i++) {
-  poles.push({ t: i / POLE_COUNT });
-}
-
 function drawPoles() {
   ctx.fillStyle = "#6b3e26";
 
@@ -82,47 +75,59 @@ function drawPoles() {
     p.t += 0.002;
     if (p.t > 1) p.t = 0;
 
-    const y = vpY + (h - vpY) * p.t;
+    const yBase = vpY + (h - vpY) * p.t;
+
     const spread = p.t;
     const xL = vpX - vpX * spread;
     const xR = vpX + (w - vpX) * spread;
 
-    const height = 40 + p.t * 260;
-    const width = 4 + p.t * 14;
+    // Pole grows from vpY toward top of canvas
+    const topY = vpY * (1 - p.t);
+    const height = yBase - topY;
+    const width = 4 + p.t * 16;
 
-    ctx.fillRect(xL - width/2, y - height, width, height);
-    ctx.fillRect(xR - width/2, y - height, width, height);
+    ctx.fillRect(xL - width / 2, topY, width, height);
+    ctx.fillRect(xR - width / 2, topY, width, height);
+
+    // store pole tops for powerlines
+    p.leftTop = { x: xL, y: topY };
+    p.rightTop = { x: xR, y: topY };
   }
 }
+
 
 /* ---------- POWER LINES ---------- */
 function drawPowerLines() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
 
-  const endY1 = h * 0.75;
-  const endY2 = h * 0.78;
+  // use the furthest pole (closest to camera)
+  const p = poles[poles.length - 1];
+  if (!p.leftTop || !p.rightTop) return;
 
+  // left side
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(40, endY1);
+  ctx.lineTo(p.leftTop.x, p.leftTop.y);
   ctx.stroke();
 
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(40, endY2);
+  ctx.lineTo(p.leftTop.x + 40, p.leftTop.y + 20);
+  ctx.stroke();
+
+  // right side
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(p.rightTop.x, p.rightTop.y);
   ctx.stroke();
 
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(w - 40, endY1);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(vpX, vpY);
-  ctx.lineTo(w - 40, endY2);
+  ctx.lineTo(p.rightTop.x - 40, p.rightTop.y + 20);
   ctx.stroke();
 }
+
 
 /* ---------- ANIMATION LOOP ---------- */
 function animate(time) {
