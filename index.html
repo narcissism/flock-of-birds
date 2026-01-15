@@ -144,11 +144,11 @@ function drawPoles(){
     const xL = vpX - (vpX - edgeOffset) * p.t;
     const xR = vpX + (w - vpX - edgeOffset) * p.t;
 
-    const height = 200 * p.t + 10;
-    const width = 10 * p.t + 2;
+    const yTop = yBase * (1 - p.t);
+    const width = 2 + 10 * p.t;
 
-    ctx.fillRect(xL - width/2, yBase - height, width, height);
-    ctx.fillRect(xR - width/2, yBase - height, width, height);
+    ctx.fillRect(xL - width/2, yTop, width, yBase - yTop);
+    ctx.fillRect(xR - width/2, yTop, width, yBase - yTop);
   }
 }
 
