@@ -138,34 +138,35 @@ function drawPoles(){
 
 /* ---------- POWER LINES ---------- */
 function drawPowerLines(){
-  ctx.strokeStyle = "red";
+  ctx.strokeStyle = "black"; 
   ctx.lineWidth = 2;
 
-  // use farthest pole as anchor
-  const p = poles[poles.length - 1];
-  const yBase = vpY + (h - vpY) * p.t;
-  const yTop = yBase * (1 - p.t);
+  // fixed height: 5/6 down the canvas
+  const yEnd = h * (5 / 6);
 
+  // LEFT SIDE
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(edgeOffset, yTop);
+  ctx.lineTo(0, yEnd);
   ctx.stroke();
 
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(edgeOffset + 40, yTop + 14);
+  ctx.lineTo(40, yEnd + 20);
+  ctx.stroke();
+
+  // RIGHT SIDE
+  ctx.beginPath();
+  ctx.moveTo(vpX, vpY);
+  ctx.lineTo(w, yEnd);
   ctx.stroke();
 
   ctx.beginPath();
   ctx.moveTo(vpX, vpY);
-  ctx.lineTo(w - edgeOffset, yTop);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(vpX, vpY);
-  ctx.lineTo(w - edgeOffset - 40, yTop + 14);
+  ctx.lineTo(w - 40, yEnd + 20);
   ctx.stroke();
 }
+
 
 
 /* ---------- ANIMATE ---------- */
