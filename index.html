@@ -215,6 +215,12 @@ function flock(b){
   
 /* ---------- DRAW BIRDS (TOP LAYER) ---------- */
 function drawBirds(){
+
+  // small wind drift
+  windAngle += (Math.random() - 0.5) * 0.002;
+  const wx = Math.cos(windAngle) * 0.02;
+  const wy = Math.sin(windAngle) * 0.015;
+  
   for(const b of birds) flock(b);
 
   for(const b of birds){
@@ -238,11 +244,6 @@ function drawBirds(){
     // Apply acceleration + wind
     b.vx += b.ax + wx;
     b.vy += b.ay + wy;
-
-    // small wind drift
-  windAngle += (Math.random() - 0.5) * 0.002;
-  const wx = Math.cos(windAngle) * 0.02;
-  const wy = Math.sin(windAngle) * 0.015;
 
     // soft edge containment
     const margin = 60;
